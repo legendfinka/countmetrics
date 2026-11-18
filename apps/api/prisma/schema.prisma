@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  createdAt     DateTime       @default(now())
+  sites         Site[]
+  refreshTokens RefreshToken[]
+}
+
+model Site {
+  id        String        @id @default(uuid())
+  userId    String
+  domain    String
+  siteKey   String        @unique
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events    Event[]
+  stats     StatsMinute[]
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Raw, append-only. BigInt id: this table grows fastest.
+model Event {
+  id          BigInt   @id @default(autoincrement())
+  siteId      String
+  type        String // "pageview" or custom event name
+  path        String
+  referrer    String?
+  country     String?
+  device      String?
+  browser     String?
+  visitorHash String
+  createdAt   DateTime @default(now())
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, createdAt])
+}
+
+// Minute-level aggregates. `visitors` is approximate (HyperLogLog).
+model StatsMinute {
+  id        BigInt   @id @default(autoincrement())
+  siteId    String
+  bucket    DateTime // truncated to the minute
+  pageviews Int      @default(0)
+  visitors  Int      @default(0)
+  events    Int      @default(0)
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, bucket])
+}
