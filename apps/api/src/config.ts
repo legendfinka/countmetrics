@@ -7,6 +7,8 @@ const envSchema = z.object({
   REDIS_URL: z.string().url(),
   CORS_ORIGIN: z.string().url(),
   JWT_SECRET: z.string().min(32),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 });
 
 export type Config = z.infer<typeof envSchema>;
