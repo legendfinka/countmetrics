@@ -9,6 +9,10 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_IP_PER_MIN: z.coerce.number().int().positive().default(600),
+  RATE_LIMIT_SITE_PER_MIN: z.coerce.number().int().positive().default(60_000),
+  /** Number of reverse proxies in front of the API (0 = none). Needed for the real client IP. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
 });
 
 export type Config = z.infer<typeof envSchema>;

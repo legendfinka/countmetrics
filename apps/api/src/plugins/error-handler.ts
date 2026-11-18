@@ -11,6 +11,7 @@ function body(code: string, message: string, details?: unknown): ErrorResponse {
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler<FastifyError>((err, request, reply) => {
     if (err instanceof AppError) {
+      if (err.headers) reply.headers(err.headers);
       return reply.code(err.statusCode).send(body(err.code, err.message, err.details));
     }
 
