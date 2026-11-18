@@ -7,6 +7,24 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: countmetrics
+          POSTGRES_PASSWORD: countmetrics
+          POSTGRES_DB: countmetrics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U countmetrics"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -18,3 +36,7 @@ jobs:
       - run: pnpm --filter api exec prisma generate
       - run: pnpm lint
       - run: pnpm typecheck
+      - name: Create test database
+        run: PGPASSWORD=countmetrics psql -h localhost -U countmetrics -c "CREATE DATABASE countmetrics_test"
+      - name: Test
+        run: cp .env.example .env && pnpm test
