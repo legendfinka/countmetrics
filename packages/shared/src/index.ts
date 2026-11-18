@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export * from "./auth.js";
 export * from "./errors.js";
+export * from "./events.js";
 export * from "./sites.js";
 
 export const healthResponseSchema = z.object({
