@@ -117,7 +117,7 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 
 ### Tracker (`packages/tracker`)
 
-- Zero dependencies, < 2 KB gzipped, ES5-compatible output.
+- Zero dependencies, < 2 KB gzipped, ES2015 output (all modern browsers).
 - Auto-tracks pageviews, including SPA navigation (history API).
 - Exposes `window.countmetrics.track(name, props?)` for custom events.
 - Uses `navigator.sendBeacon`, falls back to `fetch` with `keepalive`.

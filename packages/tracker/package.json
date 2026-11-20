@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json"
+    "build": "esbuild src/index.ts --bundle --minify --target=es2015 --format=iife --outfile=dist/tracker.js",
+    "size": "node scripts/check-size.mjs",
+    "demo": "node demo/server.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.0"
   }
 }

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tracker demo</title>
+  </head>
+  <body>
+    <h1>Tracker demo</h1>
+    <p>Open this page with <code>?key=YOUR_SITE_KEY</code> in the address.</p>
+    <p>Current path: <code id="path"></code></p>
+    <button id="signup">Track "signup"</button>
+    <button id="next">Go to the next page (no reload)</button>
+
+    <script>
+      var params = new URLSearchParams(location.search);
+
+      // Load the tracker like a customer would, with a script tag
+      var script = document.createElement("script");
+      script.src = "/tracker.js";
+      script.defer = true;
+      script.setAttribute("data-site-key", params.get("key") || "");
+      script.setAttribute("data-api", params.get("api") || "http://localhost:3000");
+      document.head.appendChild(script);
+
+      var page = 1;
+      function showPath() {
+        document.getElementById("path").textContent = location.pathname;
+      }
+      showPath();
+
+      document.getElementById("signup").onclick = function () {
+        window.countmetrics.track("signup");
+      };
+      document.getElementById("next").onclick = function () {
+        page++;
+        history.pushState(null, "", "/page-" + page + location.search);
+        showPath();
+      };
+      window.onpopstate = showPath;
+    </script>
+  </body>
+</html>
