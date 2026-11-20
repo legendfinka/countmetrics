@@ -52,7 +52,10 @@ export interface TestContext {
   close: () => Promise<void>;
 }
 
-export async function createTestContext(overrides: Partial<Config> = {}): Promise<TestContext> {
+export async function createTestContext(
+  overrides: Partial<Config> = {},
+  options: { now?: () => Date } = {},
+): Promise<TestContext> {
   const prisma = new PrismaClient({ datasourceUrl: dbUrl });
   const redis = new Redis(redisUrl, { maxRetriesPerRequest: 2 });
   const queue = createFakeQueue();
@@ -62,6 +65,7 @@ export async function createTestContext(overrides: Partial<Config> = {}): Promis
     redis,
     queue,
     lookupCountry: testLookupCountry,
+    now: options.now,
   });
   return {
     app,
