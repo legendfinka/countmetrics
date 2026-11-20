@@ -67,13 +67,19 @@ function startWorker(config: { batch: number; intervalMs: number }) {
 }
 
 const addJob = (events: EnrichedEvent[]) =>
-  queue.add("events", { events }, { jobId: randomUUID(), attempts: 3, backoff: { type: "fixed", delay: 50 } });
+  queue.add(
+    "events",
+    { events },
+    { jobId: randomUUID(), attempts: 3, backoff: { type: "fixed", delay: 50 } },
+  );
 
 describe("worker end to end", () => {
   it("writes many small jobs in a few batches", async () => {
     const worker = startWorker({ batch: 5, intervalMs: 50 });
     await Promise.all(
-      Array.from({ length: 12 }, (_, i) => addJob([makeEvent(siteId, { visitorHash: visitor(i) })])),
+      Array.from({ length: 12 }, (_, i) =>
+        addJob([makeEvent(siteId, { visitorHash: visitor(i) })]),
+      ),
     );
 
     await waitFor(async () => (await countRows(pool, "Event")) === 12);
@@ -116,7 +122,11 @@ describe("worker end to end", () => {
 
   it("flushes the buffer on graceful shutdown instead of waiting for the timer", async () => {
     const worker = startWorker({ batch: 1000, intervalMs: 60_000 });
-    await Promise.all([addJob([makeEvent(siteId)]), addJob([makeEvent(siteId)]), addJob([makeEvent(siteId)])]);
+    await Promise.all([
+      addJob([makeEvent(siteId)]),
+      addJob([makeEvent(siteId)]),
+      addJob([makeEvent(siteId)]),
+    ]);
     await waitFor(async () => (await queue.getActiveCount()) === 3); // picked up, waiting in the buffer
     expect(await countRows(pool, "Event")).toBe(0);
 

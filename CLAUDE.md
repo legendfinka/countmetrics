@@ -7,6 +7,7 @@ Portfolio project. It must demonstrate **high-load backend engineering made visi
 ## Product scope (MVP)
 
 In scope:
+
 - Auth: register, login, refresh, logout (email + password)
 - Sites: a user can add websites; each site gets a public `siteKey` used by the tracker
 - Tracker: a tiny JS snippet (`<script>`) that sends `pageview` and custom events (`countmetrics.track("signup")`)
@@ -88,6 +89,7 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 ## Architecture rules
 
 ### API
+
 - Feature modules: `src/modules/{auth,sites,ingest,stats,live}/` with `routes → service → repository` layering. No business logic in route handlers.
 - Validate every request with Zod schemas from `packages/shared` (or Fastify JSON schema generated from them).
 - `POST /api/event`:
@@ -101,17 +103,20 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 - Config via environment variables validated with Zod at startup. Provide `.env.example`.
 
 ### Worker
+
 - Batch processing with configurable batch size / flush interval.
 - Idempotent writes where possible; failed jobs retry with backoff; poison messages go to a failed queue, never block the pipeline.
 - Graceful shutdown: finish the current batch before exiting.
 
 ### Traffic simulator
+
 - Lives in the API (or worker) as an internal job, triggered by an authenticated endpoint for the user's own site, or a public endpoint for the demo site only.
 - It enqueues generated events **directly into the internal pipeline**. It must never accept a target URL or send HTTP traffic to any external host.
 - Hard caps: max duration (e.g. 30 s), max events per run, one active simulation per site, cooldown between runs.
 - Generated data should look realistic: weighted page paths, referrers, countries, devices, and a visitor-count curve.
 
 ### Tracker (`packages/tracker`)
+
 - Zero dependencies, < 2 KB gzipped, ES5-compatible output.
 - Auto-tracks pageviews, including SPA navigation (history API).
 - Exposes `window.countmetrics.track(name, props?)` for custom events.
@@ -119,12 +124,14 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 - Respects `navigator.doNotTrack` (documented behavior).
 
 ### Web
+
 - Feature folders: `src/features/{auth,sites,dashboard,live}/`
 - Server state via TanStack Query; live updates via WebSocket merged into query cache.
 - The dashboard must look polished: clean cards, smooth chart updates, loading and empty states.
 - "Simulate traffic" button with a visible running state and countdown.
 
 ### General
+
 - TypeScript strict mode everywhere, no `any` without an explanatory comment.
 - Conventional Commits, small focused commits.
 - Tests alongside features: auth, site ownership checks, ingestion validation and rate limiting, visitor hashing, worker batching/aggregation, simulator caps.

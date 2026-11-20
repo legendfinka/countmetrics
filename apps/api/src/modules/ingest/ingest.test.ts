@@ -215,7 +215,11 @@ describe("rate limiting", () => {
       expect((await post(pageview(), { ip: "198.51.100.2" }, limited.app)).statusCode).toBe(202);
       expect((await post(pageview(), { ip: "198.51.100.3" }, limited.app)).statusCode).toBe(429);
 
-      const res = await post(pageview({ siteKey: other.siteKey }), { ip: "198.51.100.3" }, limited.app);
+      const res = await post(
+        pageview({ siteKey: other.siteKey }),
+        { ip: "198.51.100.3" },
+        limited.app,
+      );
       expect(res.statusCode).toBe(202);
     } finally {
       await limited.close();

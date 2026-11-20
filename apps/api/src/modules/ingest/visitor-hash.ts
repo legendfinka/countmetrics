@@ -16,7 +16,10 @@ export function computeVisitorHash(
   ip: string,
   userAgent: string,
 ): string {
-  return createHmac("sha256", salt).update(`${siteKey}\n${ip}\n${userAgent}`).digest("hex").slice(0, 32);
+  return createHmac("sha256", salt)
+    .update(`${siteKey}\n${ip}\n${userAgent}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 /** One random salt per day (UTC). All API instances share it through Redis. */

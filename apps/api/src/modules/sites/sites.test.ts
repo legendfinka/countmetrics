@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Site } from "@countmetrics/shared";
-import { bearer, createTestContext, registerUser, resetDb, type TestContext } from "../../../test/helpers.js";
+import {
+  bearer,
+  createTestContext,
+  registerUser,
+  resetDb,
+  type TestContext,
+} from "../../../test/helpers.js";
 
 let ctx: TestContext;
 

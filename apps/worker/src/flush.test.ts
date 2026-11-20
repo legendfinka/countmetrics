@@ -67,7 +67,12 @@ describe("raw events", () => {
     await flushJobs(deps(), [
       job([
         makeEvent(siteId, { createdAt: T1, path: "/pricing", referrer: "google.com" }),
-        makeEvent(siteId, { createdAt: T2, type: "signup", country: null, visitorHash: visitor(2) }),
+        makeEvent(siteId, {
+          createdAt: T2,
+          type: "signup",
+          country: null,
+          visitorHash: visitor(2),
+        }),
       ]),
       job([makeEvent(siteId, { createdAt: T3, device: "mobile", browser: "Safari" })]),
     ]);
@@ -253,7 +258,9 @@ describe("failure isolation (createFlusher)", () => {
       job([makeEvent(siteId)]),
     ]);
 
-    expect(results.every((r) => r instanceof Error && !(r instanceof UnrecoverableError))).toBe(true);
+    expect(results.every((r) => r instanceof Error && !(r instanceof UnrecoverableError))).toBe(
+      true,
+    );
     expect(connect).toHaveBeenCalledTimes(1);
   });
 });

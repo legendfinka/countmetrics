@@ -1,6 +1,12 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { AuthResponse } from "@countmetrics/shared";
-import { bearer, createTestContext, registerUser, resetDb, type TestContext } from "../../../test/helpers.js";
+import {
+  bearer,
+  createTestContext,
+  registerUser,
+  resetDb,
+  type TestContext,
+} from "../../../test/helpers.js";
 import { hashToken } from "../../lib/tokens.js";
 
 let ctx: TestContext;
@@ -67,7 +73,9 @@ describe("register", () => {
     expect(res.statusCode).toBe(400);
     const { error } = res.json();
     expect(error.code).toBe("VALIDATION_ERROR");
-    expect(error.details).toEqual(expect.arrayContaining([expect.objectContaining({ path: "email" })]));
+    expect(error.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ path: "email" })]),
+    );
   });
 });
 

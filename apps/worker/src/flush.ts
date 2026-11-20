@@ -94,7 +94,10 @@ export function createFlusher(deps: FlushDeps) {
     } catch (err) {
       if (!isDataError(err)) return jobs.map(() => asError(err));
 
-      deps.log.warn(`batch of ${jobs.length} jobs failed with a data error, retrying one by one`, err);
+      deps.log.warn(
+        `batch of ${jobs.length} jobs failed with a data error, retrying one by one`,
+        err,
+      );
       const results: (Error | null)[] = [];
       for (const job of jobs) {
         try {
