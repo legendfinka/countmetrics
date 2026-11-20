@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Queue } from "bullmq";
 import type { Redis } from "ioredis";
 import { EVENTS_QUEUE, type EnrichedEvent, type EventsJobData } from "@countmetrics/shared";
@@ -23,7 +24,9 @@ export function createBullEventQueue(connection: Redis): EventQueue {
 
   return {
     async enqueue(events) {
-      await queue.add("events", { events });
+      // Explicit unique id: the worker uses it to skip jobs it already stored, so it must
+      // never repeat (BullMQ's own counter restarts at 1 if Redis is wiped).
+      await queue.add("events", { events }, { jobId: randomUUID() });
     },
     close: () => queue.close(),
   };

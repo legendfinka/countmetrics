@@ -64,3 +64,20 @@ export const eventsJobSchema = z.object({
 
 export type EnrichedEvent = z.infer<typeof enrichedEventSchema>;
 export type EventsJobData = z.infer<typeof eventsJobSchema>;
+
+// ---------- Worker -> API (Redis pub/sub) ----------
+
+export const siteUpdateChannel = (siteId: string): string => `site:${siteId}:update`;
+
+/** Published by the worker after each flush that stored events of a site. */
+export const siteUpdateMessageSchema = z.object({
+  siteId: z.string().uuid(),
+  /** Visitors seen in the last 5 minutes */
+  currentVisitors: z.number().int().nonnegative(),
+  /** Pageviews and custom events stored in this flush (a delta, not a total) */
+  pageviews: z.number().int().nonnegative(),
+  events: z.number().int().nonnegative(),
+  at: z.string().datetime(),
+});
+
+export type SiteUpdateMessage = z.infer<typeof siteUpdateMessageSchema>;
