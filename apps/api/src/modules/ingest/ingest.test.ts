@@ -200,7 +200,7 @@ describe("rate limiting", () => {
       expect(res.statusCode).toBe(429);
       expect(res.json().error.code).toBe("RATE_LIMITED");
       expect(Number(res.headers["retry-after"])).toBeGreaterThan(0);
-      // Another IP is not affected
+      // Another IP is not blocked
       expect((await post(pageview(), { ip: "198.51.100.7" }, limited.app)).statusCode).toBe(202);
     } finally {
       await limited.close();

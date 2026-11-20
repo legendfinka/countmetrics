@@ -7,7 +7,7 @@ function body(code: string, message: string, details?: unknown): ErrorResponse {
   return { error: details === undefined ? { code, message } : { code, message, details } };
 }
 
-/** One error shape for the whole API: { error: { code, message, details? } } */
+/** Every error has the same shape: { error: { code, message, details? } } */
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler<FastifyError>((err, request, reply) => {
     if (err instanceof AppError) {
@@ -20,7 +20,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
       return reply.code(400).send(body("VALIDATION_ERROR", "Invalid request", details));
     }
 
-    // Fastify's own client errors (malformed JSON, 429 from rate limit, ...)
+    // Client errors from Fastify itself (like broken JSON)
     if (err.statusCode && err.statusCode >= 400 && err.statusCode < 500) {
       return reply.code(err.statusCode).send(body(err.code ?? "BAD_REQUEST", err.message));
     }

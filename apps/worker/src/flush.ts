@@ -7,7 +7,7 @@ import { addToMinuteHll, updateLive } from "./live.js";
 import { claimJobs, insertEvents, upsertMinuteStats, withTransaction } from "./repository.js";
 
 export interface PendingJob {
-  /** BullMQ job id (a UUID set by the API) */
+  /** BullMQ job id (a UUID made by the API) */
   id: string;
   events: EnrichedEvent[];
 }
@@ -23,17 +23,16 @@ export interface FlushDeps {
   redis: Redis;
   log: Logger;
   now?: () => number;
-  /** Replaceable in tests */
+  /** Tests can replace this */
   live?: typeof updateLive;
 }
 
 /**
- * Stores a batch of jobs.
- *  1. HyperLogLog (idempotent, so safe to repeat on retry)
- *  2. One Postgres transaction: mark jobs as processed, bulk insert events, upsert minute stats.
- *     Jobs that were already processed (redelivery after a crash) are skipped.
- *  3. Live counters + pub/sub, best effort: the data is already safe, so a Redis hiccup here
- *     must not fail the jobs (it would only cause a retry that is skipped anyway).
+ * Saves a batch of jobs in 3 steps:
+ *  1. HyperLogLog. Safe to repeat on retry.
+ *  2. One Postgres transaction: mark jobs as done, insert events, update minute stats.
+ *     Jobs that were already done (sent again after a crash) are skipped.
+ *  3. Live counters and pub/sub. If this fails, we only log it. The data is already saved.
  */
 export async function flushJobs(deps: FlushDeps, jobs: PendingJob[]): Promise<void> {
   const now = deps.now ?? Date.now;
@@ -72,7 +71,7 @@ export async function flushJobs(deps: FlushDeps, jobs: PendingJob[]): Promise<vo
   }
 }
 
-/** Postgres class 22 (bad data) and 23 (constraint violation, e.g. site was deleted). */
+/** Postgres error codes 22 (bad data) and 23 (broken rule, like a deleted site). */
 function isDataError(err: unknown): boolean {
   const code = typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
   return typeof code === "string" && /^2[23]/.test(code);
@@ -81,11 +80,11 @@ function isDataError(err: unknown): boolean {
 const asError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)));
 
 /**
- * Flush function for the batcher with poison-message isolation:
- *  - success: all jobs resolve
- *  - infrastructure error (DB or Redis down): all jobs fail and BullMQ retries them with backoff
- *  - data error: retry job by job, so one bad job cannot block the others; a job that still
- *    fails is marked unrecoverable and goes straight to the failed set
+ * The save function for the batcher. It handles bad jobs safely:
+ *  - success: all jobs are done
+ *  - server problem (DB or Redis down): all jobs fail. BullMQ tries them again later.
+ *  - bad data: try each job alone, so one bad job can't block the others.
+ *    A job that still fails goes straight to the failed list. It is not retried.
  */
 export function createFlusher(deps: FlushDeps) {
   return async (jobs: PendingJob[]): Promise<(Error | null)[]> => {

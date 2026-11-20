@@ -12,14 +12,14 @@ export const silentLog: Logger = { info() {}, warn() {}, error() {} };
 export const createPool = (): pg.Pool => new pg.Pool({ connectionString: dbUrl, max: 5 });
 export const createRedis = (options?: RedisOptions): Redis => new Redis(redisUrl, options ?? {});
 
-/** Deleting users cascades to sites, events and stats. */
+/** Deleting users also deletes their sites, events and stats. */
 export async function resetAll(pool: pg.Pool, redis: Redis): Promise<void> {
   await pool.query(`DELETE FROM "User"`);
   await pool.query(`DELETE FROM "ProcessedJob"`);
   await redis.flushdb();
 }
 
-/** Inserts a user and a site with raw SQL (Prisma generates ids in the client, not the DB). */
+/** Adds a user and a site with raw SQL. Prisma makes ids in code, so we set them here. */
 export async function createSite(pool: pg.Pool): Promise<string> {
   const userId = randomUUID();
   const siteId = randomUUID();

@@ -6,7 +6,7 @@ import {
 } from "@countmetrics/shared";
 import { aggregateKey, type MinuteAggregate } from "./aggregate.js";
 
-/** A visitor counts as "current" if seen within this window. */
+/** A visitor is "current" if seen within this time. */
 export const LIVE_WINDOW_MS = 5 * 60_000;
 const LIVE_KEY_TTL_SECONDS = 10 * 60;
 const HLL_TTL_SECONDS = 2 * 24 * 60 * 60;
@@ -24,9 +24,9 @@ function assertNoErrors(results: PipelineResults): [Error | null, unknown][] {
 }
 
 /**
- * Adds the visitor hashes to one HyperLogLog per (site, minute) and returns the approximate
- * unique count of each. PFADD is idempotent, so retrying a batch cannot inflate the numbers.
- * Result key: see aggregateKey().
+ * Adds visitor hashes to one HyperLogLog per site and minute.
+ * Returns the approximate unique count for each. Adding the same hash twice changes nothing,
+ * so a retry can't inflate the numbers. The result keys come from aggregateKey().
  */
 export async function addToMinuteHll(
   redis: Redis,
@@ -56,8 +56,8 @@ interface SiteDelta {
 }
 
 /**
- * Updates the "current visitors" sorted set of each site (member = visitor hash, score = last
- * seen) and publishes a message on `site:{id}:update` for the dashboards.
+ * Updates the "current visitors" list of each site (visitor hash + last seen time).
+ * Then sends a message on site:{id}:update for the dashboards.
  */
 export async function updateLive(redis: Redis, events: EnrichedEvent[], nowMs: number): Promise<void> {
   const sites = new Map<string, SiteDelta>();

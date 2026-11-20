@@ -1,6 +1,6 @@
 import argon2 from "argon2";
 
-/** argon2id with library defaults. */
+/** Hashes a password with argon2id (default settings). */
 export function hashPassword(password: string): Promise<string> {
   return argon2.hash(password);
 }
@@ -16,8 +16,8 @@ export async function verifyPassword(hash: string, password: string): Promise<bo
 let dummyHash: Promise<string> | undefined;
 
 /**
- * Spend the same time as a real verification when the email is unknown,
- * so response time does not reveal which emails are registered.
+ * Used when the email is unknown. It takes the same time as a real check,
+ * so nobody can guess which emails are registered.
  */
 export async function burnPasswordCheck(password: string): Promise<void> {
   dummyHash ??= argon2.hash("dummy-password-for-timing");

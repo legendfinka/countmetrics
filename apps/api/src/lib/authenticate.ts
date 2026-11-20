@@ -8,7 +8,7 @@ declare module "@fastify/jwt" {
   }
 }
 
-/** preHandler: verifies the access token and sets `request.user.sub` (the user id). */
+/** Checks the access token. Sets request.user.sub (the user id). */
 export async function authenticate(request: FastifyRequest): Promise<void> {
   try {
     await request.jwtVerify();

@@ -40,7 +40,7 @@ describe("rate limiter", () => {
     await rl.check("1.1.1.1", "cm_a");
     const blocked = await rl.check("1.1.1.1", "cm_a");
     expect(blocked.allowed).toBe(false);
-    expect(blocked.retryAfterSeconds).toBe(50); // 12:00:10 -> next minute
+    expect(blocked.retryAfterSeconds).toBe(50); // 50 seconds until the next minute
   });
 
   it("starts a fresh window every minute", async () => {

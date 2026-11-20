@@ -1,4 +1,4 @@
-/** Expected, client-facing error. Rendered by the central error handler. */
+/** An expected error for the client. The error handler turns it into a response. */
 export class AppError extends Error {
   constructor(
     readonly statusCode: number,

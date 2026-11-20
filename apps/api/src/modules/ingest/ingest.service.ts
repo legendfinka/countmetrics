@@ -24,8 +24,8 @@ export interface IngestRequest {
 const MAX_USER_AGENT_LENGTH = 512;
 
 /**
- * Hot path: validate key -> rate limit -> enrich -> enqueue. No Postgres writes.
- * The IP is used for the country, the visitor hash and the rate limit, and goes no further.
+ * The fast path: check key -> rate limit -> enrich -> queue. No Postgres writes.
+ * The IP is only used for the country, the visitor hash and the rate limit.
  */
 export function createIngestService(deps: Deps) {
   const now = deps.now ?? (() => new Date());

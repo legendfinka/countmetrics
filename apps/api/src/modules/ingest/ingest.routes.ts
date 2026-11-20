@@ -7,8 +7,8 @@ const BODY_LIMIT_BYTES = 16 * 1024;
 
 export function ingestRoutes({ service }: { service: IngestService }): FastifyPluginAsync {
   return async (app) => {
-    // navigator.sendBeacon sends a string as text/plain (this avoids a CORS preflight),
-    // so text/plain bodies are parsed as JSON on this route.
+    // sendBeacon sends text/plain. This avoids a CORS preflight request.
+    // So this route reads text/plain bodies as JSON.
     app.removeContentTypeParser("text/plain");
     app.addContentTypeParser("text/plain", { parseAs: "string" }, (_request, body, done) => {
       try {

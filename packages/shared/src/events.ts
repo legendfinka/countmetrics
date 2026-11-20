@@ -31,7 +31,7 @@ export interface IngestBody {
   events: z.infer<typeof eventFieldsSchema>[];
 }
 
-/** Accepts a single event or a batch ({ siteKey, events: [...] }) and normalizes to a batch. */
+/** Accepts one event or a batch. Always returns a batch. */
 export function parseIngestBody(raw: unknown): IngestBody {
   if (typeof raw === "object" && raw !== null && "events" in raw) {
     return batchEventBodySchema.parse(raw);
@@ -49,11 +49,11 @@ export const enrichedEventSchema = z.object({
   path: z.string().max(512),
   /** Hostname only */
   referrer: z.string().max(253).nullable(),
-  /** ISO 3166-1 alpha-2, null if unknown */
+  /** Two-letter country code, or null if unknown */
   country: z.string().length(2).nullable(),
   device: z.enum(["desktop", "mobile", "tablet"]),
   browser: z.string().max(32),
-  /** Daily-rotating hash, see visitor-hash.ts in the API */
+  /** Visitor hash that changes every day. See visitor-hash.ts. */
   visitorHash: z.string().length(32),
   createdAt: z.string().datetime(),
 });
@@ -69,12 +69,12 @@ export type EventsJobData = z.infer<typeof eventsJobSchema>;
 
 export const siteUpdateChannel = (siteId: string): string => `site:${siteId}:update`;
 
-/** Published by the worker after each flush that stored events of a site. */
+/** The worker sends this after it saves events of a site. */
 export const siteUpdateMessageSchema = z.object({
   siteId: z.string().uuid(),
   /** Visitors seen in the last 5 minutes */
   currentVisitors: z.number().int().nonnegative(),
-  /** Pageviews and custom events stored in this flush (a delta, not a total) */
+  /** Events saved in this flush. Not a total. */
   pageviews: z.number().int().nonnegative(),
   events: z.number().int().nonnegative(),
   at: z.string().datetime(),

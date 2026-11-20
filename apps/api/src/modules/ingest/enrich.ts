@@ -4,10 +4,10 @@ import type { EnrichedEvent } from "@countmetrics/shared";
 
 type Device = EnrichedEvent["device"];
 
-// ---------- Country (offline lookup, the IP is never stored) ----------
+// ---------- Country (offline lookup, the IP is not saved) ----------
 
-// geoip-lite is CommonJS and loads its ~100 MB database synchronously on first require,
-// so load it lazily (and let index.ts preload it at startup) instead of at import time.
+// geoip-lite loads a big database (about 100 MB) the first time it is used.
+// So we load it lazily. index.ts preloads it at startup.
 let geo: typeof GeoIp | undefined;
 
 function loadGeo(): typeof GeoIp {
@@ -26,14 +26,14 @@ export function lookupCountry(ip: string): string | null {
   return loadGeo().lookup(ip)?.country ?? null;
 }
 
-// ---------- User agent (small hand-written parser, no dependency) ----------
+// ---------- User agent (small parser, no extra package) ----------
 
 export function parseUserAgent(ua: string): { device: Device; browser: string } {
   let device: Device = "desktop";
   if (/iPad|Tablet|PlayBook|Silk|Android(?!.*Mobile)/i.test(ua)) device = "tablet";
   else if (/Mobi|iPhone|iPod|Android|Windows Phone/i.test(ua)) device = "mobile";
 
-  // Order matters: Edge, Opera and Chrome-based browsers all contain "Chrome"/"Safari"
+  // Order matters. Edge and Opera also contain "Chrome" and "Safari" in their text.
   let browser = "Other";
   if (/Edg(e|A|iOS)?\//.test(ua)) browser = "Edge";
   else if (/OPR\/|Opera/.test(ua)) browser = "Opera";
@@ -46,16 +46,16 @@ export function parseUserAgent(ua: string): { device: Device; browser: string } 
   return { device, browser };
 }
 
-// ---------- Privacy-minimizing normalization ----------
+// ---------- Clean up data for privacy ----------
 
-/** Drops query string and hash (they can contain personal data) and caps the length. */
+/** Removes ?query and #hash (they can hold personal data). Cuts long paths. */
 export function normalizePath(raw: string): string {
   const end = raw.search(/[?#]/);
   const path = end === -1 ? raw : raw.slice(0, end);
   return (path.startsWith("/") ? path : `/${path}`).slice(0, 512);
 }
 
-/** Keeps only the hostname of http(s) referrers, without "www.". */
+/** Keeps only the hostname (without "www."). Only for http and https. */
 export function normalizeReferrer(raw: string | undefined): string | null {
   if (!raw) return null;
   try {

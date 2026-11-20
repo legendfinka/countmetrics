@@ -31,7 +31,7 @@ describe("site key cache", () => {
     advance(501);
     await cache.resolve("cm_valid");
     await cache.resolve("cm_unknown");
-    expect(lookup).toHaveBeenCalledTimes(3); // valid is still cached, unknown expired
+    expect(lookup).toHaveBeenCalledTimes(3); // the valid key is cached, the unknown one expired
 
     advance(1000);
     await cache.resolve("cm_valid");
@@ -49,12 +49,12 @@ describe("site key cache", () => {
     const { cache, lookup } = setup({ maxEntries: 2 });
     await cache.resolve("cm_a");
     await cache.resolve("cm_b");
-    await cache.resolve("cm_c"); // evicts cm_a
+    await cache.resolve("cm_c"); // removes cm_a
     expect(lookup).toHaveBeenCalledTimes(3);
 
     await cache.resolve("cm_b"); // still cached
     expect(lookup).toHaveBeenCalledTimes(3);
-    await cache.resolve("cm_a"); // evicted: looked up again
+    await cache.resolve("cm_a"); // was removed, so it is looked up again
     expect(lookup).toHaveBeenCalledTimes(4);
   });
 });

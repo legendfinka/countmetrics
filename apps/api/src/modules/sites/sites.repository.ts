@@ -5,7 +5,7 @@ export function createSitesRepository(prisma: PrismaClient) {
     listByUser: (userId: string) =>
       prisma.site.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
 
-    /** Ownership is part of the query: a site of another user is simply "not found". */
+    /** The owner check is in the query. Another user's site is just "not found". */
     findOwned: (userId: string, id: string) => prisma.site.findFirst({ where: { id, userId } }),
 
     create: (data: { userId: string; domain: string; siteKey: string }) =>

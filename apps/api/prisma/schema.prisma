@@ -41,7 +41,7 @@ model RefreshToken {
   @@index([userId])
 }
 
-// Raw, append-only. BigInt id: this table grows fastest.
+// Raw events. Only added, never changed. Uses a BigInt id because it grows fastest.
 model Event {
   id          BigInt   @id @default(autoincrement())
   siteId      String
@@ -58,9 +58,9 @@ model Event {
   @@index([siteId, createdAt])
 }
 
-// Written by the worker in the same transaction as the events of a queue job.
-// A redelivered job finds its id here and is skipped, so nothing is counted twice.
-// Rows older than 24 h are deleted by the worker.
+// Ids of jobs the worker already saved.
+// If a job comes again, the worker skips it. So nothing is counted twice.
+// The worker deletes rows older than 24 hours.
 model ProcessedJob {
   jobId       String   @id
   processedAt DateTime @default(now())
@@ -68,11 +68,11 @@ model ProcessedJob {
   @@index([processedAt])
 }
 
-// Minute-level aggregates. `visitors` is approximate (HyperLogLog).
+// Totals per minute. "visitors" is approximate (HyperLogLog).
 model StatsMinute {
   id        BigInt   @id @default(autoincrement())
   siteId    String
-  bucket    DateTime // truncated to the minute
+  bucket    DateTime // start of the minute
   pageviews Int      @default(0)
   visitors  Int      @default(0)
   events    Int      @default(0)

@@ -1,2 +1,2 @@
-// Tracker implementation lands in step 6.
+// The tracker is built in step 6.
 export {};

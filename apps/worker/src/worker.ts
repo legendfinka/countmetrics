@@ -10,12 +10,12 @@ import { createProcessor } from "./processor.js";
 export interface EventWorkerDeps {
   config: Pick<Config, "WORKER_BATCH_SIZE" | "WORKER_FLUSH_INTERVAL_MS" | "WORKER_CONCURRENCY">;
   pool: Pool;
-  /** Regular connection for HyperLogLog, live counters and pub/sub */
+  /** Normal connection for HyperLogLog, live counters and pub/sub */
   redis: Redis;
-  /** Connection for BullMQ; must be created with `maxRetriesPerRequest: null` */
+  /** Connection for BullMQ. It needs maxRetriesPerRequest: null */
   queueConnection: Redis;
   log: Logger;
-  /** Called after every flush (useful for metrics and tests) */
+  /** Called after every save. Useful for metrics and tests. */
   onFlush?: (stats: { jobs: number; events: number; failed: number }) => void;
 }
 
@@ -52,8 +52,8 @@ export function createEventWorker(deps: EventWorkerDeps) {
     worker,
     batcher,
     /**
-     * Graceful shutdown: stop taking new jobs, write whatever is buffered right away
-     * (instead of waiting for the timer) and wait for the running jobs to finish.
+     * Safe shutdown: stop taking new jobs, save the buffer right now (don't wait for the timer),
+     * and wait for running jobs to finish.
      */
     async close(): Promise<void> {
       const closing = worker.close();

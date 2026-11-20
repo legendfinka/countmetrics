@@ -21,8 +21,8 @@ export const aggregateKey = (siteId: string, bucket: Date): string =>
   `${siteId}|${bucket.getTime()}`;
 
 /**
- * Groups events by (site, minute). The result is sorted by site and minute, so concurrent
- * workers upsert rows in the same order and cannot deadlock each other.
+ * Groups events by site and minute. The result is sorted.
+ * So every worker updates rows in the same order, and they can't block each other.
  */
 export function aggregateByMinute(events: EnrichedEvent[]): MinuteAggregate[] {
   const groups = new Map<string, MinuteAggregate>();

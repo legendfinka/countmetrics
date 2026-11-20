@@ -24,7 +24,7 @@ export const testConfig: Config = {
   TRUST_PROXY_HOPS: 0,
 };
 
-/** In-memory queue: each `enqueue` call (= one HTTP request) is one entry in `jobs`. */
+/** Fake queue in memory. Each enqueue call (one HTTP request) adds one entry to jobs. */
 export interface FakeQueue extends EventQueue {
   jobs: EnrichedEvent[][];
 }
@@ -40,7 +40,7 @@ export function createFakeQueue(): FakeQueue {
   };
 }
 
-/** Deterministic country lookup so tests do not load the geoip database. */
+/** Fixed country lookup. Tests don't load the geoip database. */
 export const TEST_IP = "203.0.113.5";
 const testLookupCountry = (ip: string): string | null => (ip === TEST_IP ? "DE" : null);
 
@@ -76,12 +76,12 @@ export async function createTestContext(overrides: Partial<Config> = {}): Promis
   };
 }
 
-/** Deleting users cascades to sites, refresh tokens, events and stats. */
+/** Deleting users also deletes their sites, tokens, events and stats. */
 export async function resetDb(prisma: PrismaClient): Promise<void> {
   await prisma.user.deleteMany();
 }
 
-/** Creates a user with one site that has a known siteKey. */
+/** Creates a user with one site. The siteKey is known. */
 export async function createSiteFixture(
   prisma: PrismaClient,
   siteKey = "cm_testkey00001",

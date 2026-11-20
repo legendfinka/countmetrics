@@ -112,7 +112,7 @@ describe("ownership", () => {
       expect(res.statusCode).toBe(404);
       expect(res.json().error.code).toBe("SITE_NOT_FOUND");
     }
-    // The site is untouched
+    // The site did not change
     const stored = await ctx.prisma.site.findUniqueOrThrow({ where: { id: site.id } });
     expect(stored.domain).toBe("example.com");
   });

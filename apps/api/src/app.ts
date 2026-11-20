@@ -27,13 +27,13 @@ export interface AppDeps {
   prisma: PrismaClient;
   redis: Redis;
   queue: EventQueue;
-  /** Overridable in tests to avoid loading the geoip database. */
+  /** Tests replace this, so they don't load the geoip database. */
   lookupCountry?: (ip: string) => string | null;
 }
 
 const INGEST_PATH = "/api/event";
 
-/** Builds the app without starting it, so tests can use `app.inject()`. */
+/** Builds the app but does not start it. Tests use app.inject(). */
 export async function buildApp({
   config,
   prisma,
@@ -43,14 +43,14 @@ export async function buildApp({
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV !== "test",
-    // Trust only the N proxies nearest to us, so a client cannot spoof its IP via X-Forwarded-For
+    // Trust only the closest N proxies. Then a client can't fake its IP.
     trustProxy: config.TRUST_PROXY_HOPS > 0 ? (_address, hop) => hop < config.TRUST_PROXY_HOPS : false,
   });
 
   registerErrorHandler(app);
 
-  // The tracker runs on any customer site, so the ingestion endpoint accepts every origin
-  // (without credentials). Everything else is limited to the dashboard origin.
+  // The tracker runs on any website, so /api/event accepts every origin (no cookies).
+  // All other routes only accept the dashboard origin.
   await app.register(cors, () => {
     return (
       request: FastifyRequest,

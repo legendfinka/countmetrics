@@ -21,8 +21,8 @@ export function createAuthRepository(prisma: PrismaClient) {
       prisma.refreshToken.findUnique({ where: { tokenHash }, include: { user: true } }),
 
     /**
-     * Revoke the old token and create the new one atomically.
-     * Returns false if the old token was already revoked (reuse or a concurrent refresh).
+     * Revokes the old token and creates the new one in one transaction.
+     * Returns false if the old token was already revoked.
      */
     rotateRefreshToken(oldId: string, next: NewRefreshToken): Promise<boolean> {
       return prisma.$transaction(async (tx) => {

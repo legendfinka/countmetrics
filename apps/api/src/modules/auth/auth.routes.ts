@@ -14,8 +14,8 @@ interface Deps {
 }
 
 export function authRoutes({ service, config }: Deps): FastifyPluginAsync {
-  // Web (Vercel) and API (Render) are different sites in production, so the cookie
-  // must be SameSite=None; Secure there. Locally Lax over http is enough.
+  // In production the web app and the API are on different sites.
+  // So the cookie needs SameSite=None and Secure. Locally, Lax is enough.
   const secure = config.NODE_ENV === "production";
 
   function sendSession(reply: FastifyReply, status: number, session: Session) {

@@ -1,12 +1,12 @@
 export interface BatcherOptions<T> {
-  /** Flush as soon as the buffered weight reaches this (weight = number of events). */
+  /** Save as soon as the buffer reaches this weight (weight = number of events). */
   maxWeight: number;
-  /** Flush at the latest this long after the first buffered item. */
+  /** Save at the latest this long after the first item arrives. */
   flushIntervalMs: number;
   weigh: (item: T) => number;
   /**
-   * Writes a batch. Returns one entry per item: an Error rejects that item only,
-   * null resolves it. Throwing rejects every item in the batch.
+   * Saves a batch. Returns one result per item. An Error fails only that item.
+   * null means success. If it throws, every item in the batch fails.
    */
   flush: (items: T[]) => Promise<(Error | null)[]>;
 }
@@ -18,15 +18,15 @@ interface Pending<T> {
 }
 
 export interface Batcher<T> {
-  /** Resolves once the batch containing the item has been written, rejects if that failed. */
+  /** Resolves when the item's batch is saved. Rejects if saving failed. */
   add(item: T): Promise<void>;
-  /** Flushes the buffer now and resolves when all running and queued flushes are done. */
+  /** Saves the buffer now. Resolves when all running and waiting saves are done. */
   flushNow(): Promise<void>;
 }
 
 /**
- * Collects items and writes them in batches. Batches are written one at a time, so the
- * database never sees more than one concurrent flush from this process.
+ * Collects items and saves them in batches. Only one batch is saved at a time.
+ * So this process never runs two saves on the database at once.
  */
 export function createBatcher<T>({
   maxWeight,
@@ -58,7 +58,7 @@ export function createBatcher<T>({
     const batch = buffer;
     buffer = [];
     weight = 0;
-    // `run` never throws, so the chain never rejects
+    // run() never throws, so the chain never fails
     if (batch.length > 0) chain = chain.then(() => run(batch));
     return chain;
   }

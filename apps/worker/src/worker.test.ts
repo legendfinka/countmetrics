@@ -17,7 +17,7 @@ import {
 } from "../test/helpers.js";
 import { createEventWorker } from "./worker.js";
 
-// End-to-end: real BullMQ queue -> worker -> batcher -> Postgres.
+// End-to-end test: real queue -> worker -> batcher -> Postgres.
 
 let pool: pg.Pool;
 let redis: Redis;

@@ -1,5 +1,5 @@
 interface Entry {
-  /** null = the key is known to be invalid (negative cache) */
+  /** null means the key is known to be invalid */
   siteId: string | null;
   expiresAt: number;
 }
@@ -12,10 +12,10 @@ interface Options {
 }
 
 /**
- * In-memory siteKey -> siteId cache in front of Postgres.
- * - Valid keys are cached for ttlMs, so a deleted site is still accepted for at most that long.
- * - Unknown keys are cached too, so a flood of random keys cannot hit the database.
- * - Concurrent lookups of the same key share one query.
+ * Keeps siteKey -> siteId in memory, in front of Postgres.
+ * - Valid keys are kept for ttlMs. A deleted site still works for that long.
+ * - Unknown keys are kept too. Random keys can't flood the database.
+ * - If many requests ask for the same key at once, only one query runs.
  */
 export function createSiteKeyCache(
   lookup: (siteKey: string) => Promise<string | null>,
@@ -27,7 +27,7 @@ export function createSiteKeyCache(
   async function load(siteKey: string): Promise<string | null> {
     const siteId = await lookup(siteKey);
     if (entries.size >= maxEntries) {
-      // Map keeps insertion order: drop the oldest entry
+      // A Map remembers insertion order, so the first key is the oldest
       const oldest = entries.keys().next();
       if (!oldest.done) entries.delete(oldest.value);
     }

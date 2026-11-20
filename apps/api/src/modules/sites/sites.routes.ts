@@ -5,7 +5,7 @@ import type { SitesService } from "./sites.service.js";
 
 export function sitesRoutes({ service }: { service: SitesService }): FastifyPluginAsync {
   return async (app) => {
-    // Every site route requires a logged-in user; ownership is checked in the service.
+    // All site routes need a logged-in user. The service checks who owns the site.
     app.addHook("preHandler", authenticate);
 
     app.get("/", async (request) => ({ sites: await service.list(request.user.sub) }));

@@ -61,7 +61,7 @@ export function createAuthService({ repo, config, signAccessToken }: Deps) {
         });
         return await startSession(toPublicUser(user));
       } catch (err) {
-        // Two simultaneous registrations with the same email
+        // Two people registered the same email at the same time
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
           throw conflict("EMAIL_TAKEN", "Email is already registered");
         }
@@ -79,7 +79,7 @@ export function createAuthService({ repo, config, signAccessToken }: Deps) {
       return startSession(toPublicUser(user));
     },
 
-    /** Rotating refresh: each token is single-use. Reusing a revoked one kills all sessions. */
+    /** Each refresh token works once. Reusing an old one logs the user out everywhere. */
     async refresh(rawToken: string): Promise<Session> {
       const current = await repo.findRefreshTokenByHash(hashToken(rawToken));
       if (!current) throw invalidRefresh();
@@ -103,7 +103,7 @@ export function createAuthService({ repo, config, signAccessToken }: Deps) {
       };
     },
 
-    /** Idempotent: unknown or already revoked tokens are ignored. */
+    /** Safe to call twice. Unknown or revoked tokens are ignored. */
     async logout(rawToken: string | undefined): Promise<void> {
       if (rawToken) await repo.revokeByHash(hashToken(rawToken));
     },

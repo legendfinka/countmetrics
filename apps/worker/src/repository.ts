@@ -1,10 +1,10 @@
 import type { Pool, PoolClient } from "pg";
 import type { EnrichedEvent } from "@countmetrics/shared";
 
-// Raw SQL on purpose: one statement per batch (UNNEST of column arrays) instead of one per row.
-// Table and column names are the ones Prisma creates (quoted, case-sensitive).
-// Timestamps are sent as timestamptz and converted with AT TIME ZONE 'UTC', because Prisma's
-// DateTime columns are `timestamp without time zone` holding UTC.
+// Raw SQL on purpose. One statement saves a whole batch (UNNEST), not one row at a time.
+// Table and column names are the ones Prisma creates. They need quotes.
+// Times are sent with a timezone and converted to UTC.
+// Prisma's DateTime columns have no timezone and hold UTC.
 
 export async function withTransaction<T>(
   pool: Pool,
@@ -24,7 +24,7 @@ export async function withTransaction<T>(
   }
 }
 
-/** Records job ids as processed. Returns the ids that were new (not seen before). */
+/** Saves job ids as done. Returns only the ids that were new. */
 export async function claimJobs(client: PoolClient, jobIds: string[]): Promise<Set<string>> {
   const { rows } = await client.query<{ jobId: string }>(
     `INSERT INTO "ProcessedJob" ("jobId")
@@ -68,8 +68,8 @@ export interface MinuteStatsRow {
 }
 
 /**
- * Adds this batch's counts to the minute rows. `visitors` is an approximate unique count
- * (from HyperLogLog), so it takes the larger value instead of being summed.
+ * Adds this batch's counts to the minute rows.
+ * "visitors" is approximate (HyperLogLog), so we keep the larger value. We don't add it up.
  */
 export async function upsertMinuteStats(client: PoolClient, rows: MinuteStatsRow[]): Promise<void> {
   await client.query(
@@ -90,7 +90,7 @@ export async function upsertMinuteStats(client: PoolClient, rows: MinuteStatsRow
   );
 }
 
-/** Job ids only need to live as long as a job can still be redelivered. */
+/** Job ids are only needed while a job can still come back. */
 export async function deleteOldProcessedJobs(pool: Pool, olderThanHours = 24): Promise<number> {
   const result = await pool.query(
     `DELETE FROM "ProcessedJob" WHERE "processedAt" < now() - make_interval(hours => $1)`,

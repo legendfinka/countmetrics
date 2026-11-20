@@ -10,7 +10,7 @@ const log = console;
 const pool = new pg.Pool({ connectionString: config.DATABASE_URL, max: 5 });
 pool.on("error", (err) => log.error("postgres pool error", err));
 const redis = new Redis(config.REDIS_URL);
-// BullMQ's worker blocks on this connection, so it needs unlimited retries per request
+// The BullMQ worker waits on this connection, so it needs maxRetriesPerRequest: null
 const queueConnection = new Redis(config.REDIS_URL, { maxRetriesPerRequest: null });
 redis.on("error", (err) => log.error("redis error", err));
 

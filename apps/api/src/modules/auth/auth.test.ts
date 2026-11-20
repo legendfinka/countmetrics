@@ -144,9 +144,9 @@ describe("refresh rotation", () => {
     const { refreshToken: first } = await registerUser(ctx.app);
     const second = (await refresh(first)).cookies.find((c) => c.name === "refresh_token")?.value;
 
-    // Replaying the already-used first token is treated as theft
+    // Using the old token again looks like theft
     expect((await refresh(first)).statusCode).toBe(401);
-    // ...so the legitimately rotated token is dead too
+    // So the new token stops working too
     expect((await refresh(second)).statusCode).toBe(401);
   });
 

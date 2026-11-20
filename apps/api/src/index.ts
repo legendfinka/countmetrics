@@ -7,7 +7,7 @@ import { createBullEventQueue } from "./modules/ingest/event-queue.js";
 
 const config = loadConfig();
 const prisma = new PrismaClient();
-// Fail fast instead of hanging requests when Redis is down
+// Fail fast if Redis is down, instead of hanging
 const redis = new Redis(config.REDIS_URL, { maxRetriesPerRequest: 2 });
 const queue = createBullEventQueue(redis);
 

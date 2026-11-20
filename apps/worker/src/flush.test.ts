@@ -87,7 +87,7 @@ describe("raw events", () => {
       device: "desktop",
       browser: "Chrome",
       visitorHash: visitor(1),
-      created: "2026-03-10T12:00:10.000Z", // stored as UTC, no timezone shift
+      created: "2026-03-10T12:00:10.000Z", // saved as UTC, no timezone shift
     });
     expect(rows[1]).toMatchObject({ type: "signup", referrer: null, country: null });
     expect(rows[2]).toMatchObject({ device: "mobile", browser: "Safari" });
@@ -237,7 +237,7 @@ describe("failure isolation (createFlusher)", () => {
     expect(results[1]).toBeInstanceOf(UnrecoverableError);
     expect(results[2]).toBeNull();
     expect(await countRows(pool, "Event")).toBe(2);
-    // The rolled back poison job was not marked as processed
+    // The bad job was rolled back, so it is not marked as done
     const { rows } = await pool.query(`SELECT "jobId" FROM "ProcessedJob" WHERE "jobId" = $1`, [
       poison.id,
     ]);

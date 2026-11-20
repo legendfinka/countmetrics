@@ -13,8 +13,8 @@ export interface RateLimitResult {
 }
 
 /**
- * Fixed-window counters in Redis, per IP and per siteKey.
- * Both counters are incremented in one pipeline: a single round trip per request.
+ * Counts requests per minute in Redis, per IP and per siteKey.
+ * Both counters are updated together, so it is one Redis call per request.
  */
 export function createRateLimiter(redis: Redis, limits: RateLimits, now: () => number = Date.now) {
   return {
