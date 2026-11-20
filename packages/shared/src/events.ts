@@ -69,6 +69,12 @@ export type EventsJobData = z.infer<typeof eventsJobSchema>;
 
 export const siteUpdateChannel = (siteId: string): string => `site:${siteId}:update`;
 
+/** A visitor is "current" if seen within this time. */
+export const LIVE_WINDOW_MS = 5 * 60_000;
+
+/** Redis key of the "current visitors" list of a site. The worker writes it, the API reads it. */
+export const liveVisitorsKey = (siteId: string): string => `cm:live:${siteId}`;
+
 /** The worker sends this after it saves events of a site. */
 export const siteUpdateMessageSchema = z.object({
   siteId: z.string().uuid(),

@@ -18,6 +18,10 @@ import { createIngestService } from "./modules/ingest/ingest.service.js";
 import { createRateLimiter } from "./modules/ingest/rate-limiter.js";
 import { createSiteKeyCache } from "./modules/ingest/site-key-cache.js";
 import { createSaltProvider } from "./modules/ingest/visitor-hash.js";
+import { createStatsCache } from "./modules/stats/stats-cache.js";
+import { createStatsRepository } from "./modules/stats/stats.repository.js";
+import { statsRoutes } from "./modules/stats/stats.routes.js";
+import { createStatsService } from "./modules/stats/stats.service.js";
 import { sitesRoutes } from "./modules/sites/sites.routes.js";
 import { createSitesRepository } from "./modules/sites/sites.repository.js";
 import { createSitesService } from "./modules/sites/sites.service.js";
@@ -29,6 +33,8 @@ export interface AppDeps {
   queue: EventQueue;
   /** Tests replace this, so they don't load the geoip database. */
   lookupCountry?: (ip: string) => string | null;
+  /** Clock for the stats. Tests set a fixed time. */
+  now?: () => Date;
 }
 
 const INGEST_PATH = "/api/event";
@@ -40,11 +46,13 @@ export async function buildApp({
   redis,
   queue,
   lookupCountry = geoipLookupCountry,
+  now,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV !== "test",
     // Trust only the closest N proxies. Then a client can't fake its IP.
-    trustProxy: config.TRUST_PROXY_HOPS > 0 ? (_address, hop) => hop < config.TRUST_PROXY_HOPS : false,
+    trustProxy:
+      config.TRUST_PROXY_HOPS > 0 ? (_address, hop) => hop < config.TRUST_PROXY_HOPS : false,
   });
 
   registerErrorHandler(app);
@@ -70,10 +78,16 @@ export async function buildApp({
   const authService = createAuthService({
     repo: createAuthRepository(prisma),
     config,
-    signAccessToken: (sub) =>
-      app.jwt.sign({ sub }, { expiresIn: config.ACCESS_TOKEN_TTL_SECONDS }),
+    signAccessToken: (sub) => app.jwt.sign({ sub }, { expiresIn: config.ACCESS_TOKEN_TTL_SECONDS }),
   });
-  const sitesService = createSitesService(createSitesRepository(prisma));
+  const sitesRepository = createSitesRepository(prisma);
+  const sitesService = createSitesService(sitesRepository);
+  const statsService = createStatsService({
+    sites: sitesRepository,
+    stats: createStatsRepository(prisma, redis),
+    cache: createStatsCache(redis),
+    now,
+  });
   const ingestService = createIngestService({
     siteKeys: createSiteKeyCache(createIngestRepository(prisma).findSiteIdByKey),
     limiter: createRateLimiter(redis, {
@@ -89,6 +103,7 @@ export async function buildApp({
   await app.register(authRoutes({ service: authService, config }), { prefix: "/api/auth" });
   await app.register(sitesRoutes({ service: sitesService }), { prefix: "/api/sites" });
   await app.register(ingestRoutes({ service: ingestService }), { prefix: INGEST_PATH });
+  await app.register(statsRoutes({ service: statsService }), { prefix: "/api/sites/:id/stats" });
 
   return app;
 }

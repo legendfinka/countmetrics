@@ -1,19 +1,18 @@
 import type { Redis } from "ioredis";
 import {
+  LIVE_WINDOW_MS,
+  liveVisitorsKey,
   siteUpdateChannel,
   type EnrichedEvent,
   type SiteUpdateMessage,
 } from "@countmetrics/shared";
 import { aggregateKey, type MinuteAggregate } from "./aggregate.js";
 
-/** A visitor is "current" if seen within this time. */
-export const LIVE_WINDOW_MS = 5 * 60_000;
 const LIVE_KEY_TTL_SECONDS = 10 * 60;
 const HLL_TTL_SECONDS = 2 * 24 * 60 * 60;
 
 const hllKey = (siteId: string, bucket: Date): string =>
   `cm:hll:${siteId}:${bucket.toISOString().slice(0, 16)}`;
-const liveKey = (siteId: string): string => `cm:live:${siteId}`;
 
 type PipelineResults = [Error | null, unknown][] | null;
 
@@ -59,7 +58,11 @@ interface SiteDelta {
  * Updates the "current visitors" list of each site (visitor hash + last seen time).
  * Then sends a message on site:{id}:update for the dashboards.
  */
-export async function updateLive(redis: Redis, events: EnrichedEvent[], nowMs: number): Promise<void> {
+export async function updateLive(
+  redis: Redis,
+  events: EnrichedEvent[],
+  nowMs: number,
+): Promise<void> {
   const sites = new Map<string, SiteDelta>();
   for (const e of events) {
     let site = sites.get(e.siteId);
@@ -78,7 +81,7 @@ export async function updateLive(redis: Redis, events: EnrichedEvent[], nowMs: n
 
   const counting = redis.pipeline();
   for (const [siteId, site] of entries) {
-    const key = liveKey(siteId);
+    const key = liveVisitorsKey(siteId);
     const scoreMembers = [...site.seen].flatMap(([hash, at]) => [at, hash]);
     counting.zadd(key, ...scoreMembers);
     counting.zremrangebyscore(key, "-inf", cutoff);
