@@ -40,3 +40,5 @@ jobs:
         run: PGPASSWORD=countmetrics psql -h localhost -U countmetrics -c "CREATE DATABASE countmetrics_test"
       - name: Test
         run: cp .env.example .env && pnpm test
+      - name: Build the tracker and check its size
+        run: pnpm --filter @countmetrics/tracker build && pnpm --filter @countmetrics/tracker size

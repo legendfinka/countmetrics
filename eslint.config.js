@@ -16,7 +16,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ["apps/api/**/*.ts", "apps/worker/**/*.ts", "*.config.{js,ts}"],
+    files: [
+      "apps/api/**/*.ts",
+      "apps/worker/**/*.ts",
+      "*.config.{js,ts}",
+      "packages/tracker/scripts/*.mjs",
+      "packages/tracker/demo/server.mjs",
+    ],
     languageOptions: { globals: globals.node },
   },
   {
