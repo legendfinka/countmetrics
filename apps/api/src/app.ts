@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import cookie from "@fastify/cookie";
 import cors, { type FastifyCorsOptions } from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import websocket from "@fastify/websocket";
 import type { PrismaClient } from "@prisma/client";
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import type { Redis } from "ioredis";
@@ -11,6 +12,9 @@ import { registerErrorHandler } from "./plugins/error-handler.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { createAuthRepository } from "./modules/auth/auth.repository.js";
 import { createAuthService } from "./modules/auth/auth.service.js";
+import { createLiveHub } from "./modules/live/live-hub.js";
+import { liveRoutes } from "./modules/live/live.routes.js";
+import { createLiveService } from "./modules/live/live.service.js";
 import { lookupCountry as geoipLookupCountry } from "./modules/ingest/enrich.js";
 import type { EventQueue } from "./modules/ingest/event-queue.js";
 import { createIngestRepository } from "./modules/ingest/ingest.repository.js";
@@ -39,6 +43,8 @@ export interface AppDeps {
   now?: () => Date;
   /** The built tracker script. Tests use a temporary file. */
   trackerFile?: string;
+  /** How long a WebSocket has to log in. Tests use a short time. */
+  liveAuthTimeoutMs?: number;
 }
 
 const INGEST_PATH = "/api/event";
@@ -56,6 +62,7 @@ export async function buildApp({
   lookupCountry = geoipLookupCountry,
   now,
   trackerFile = DEFAULT_TRACKER_FILE,
+  liveAuthTimeoutMs,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV !== "test",
@@ -87,6 +94,8 @@ export async function buildApp({
   });
   await app.register(cookie);
   await app.register(jwt, { secret: config.JWT_SECRET });
+  // Messages from the browser are tiny (just the login), so a small limit is enough
+  await app.register(websocket, { options: { maxPayload: 1024 } });
 
   const authService = createAuthService({
     repo: createAuthRepository(prisma),
@@ -95,6 +104,22 @@ export async function buildApp({
   });
   const sitesRepository = createSitesRepository(prisma);
   const sitesService = createSitesService(sitesRepository);
+  // A Redis connection in subscriber mode can't run other commands, so it gets its own
+  const hub = createLiveHub(redis.duplicate());
+  app.addHook("onClose", async () => {
+    await hub.close();
+  });
+  const liveService = createLiveService({
+    sites: sitesRepository,
+    hub,
+    verifyToken: (token) => {
+      try {
+        return app.jwt.verify<{ sub: string; exp: number }>(token);
+      } catch {
+        return null;
+      }
+    },
+  });
   const statsService = createStatsService({
     sites: sitesRepository,
     stats: createStatsRepository(prisma, redis),
@@ -117,6 +142,9 @@ export async function buildApp({
   await app.register(sitesRoutes({ service: sitesService }), { prefix: "/api/sites" });
   await app.register(ingestRoutes({ service: ingestService }), { prefix: INGEST_PATH });
   await app.register(statsRoutes({ service: statsService }), { prefix: "/api/sites/:id/stats" });
+  await app.register(liveRoutes({ service: liveService, authTimeoutMs: liveAuthTimeoutMs }), {
+    prefix: "/api/sites/:id/live",
+  });
   await app.register(trackerRoutes({ file: trackerFile }));
 
   return app;

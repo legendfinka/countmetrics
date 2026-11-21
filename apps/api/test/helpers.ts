@@ -54,7 +54,7 @@ export interface TestContext {
 
 export async function createTestContext(
   overrides: Partial<Config> = {},
-  options: { now?: () => Date; trackerFile?: string } = {},
+  options: { now?: () => Date; trackerFile?: string; liveAuthTimeoutMs?: number } = {},
 ): Promise<TestContext> {
   const prisma = new PrismaClient({ datasourceUrl: dbUrl });
   const redis = new Redis(redisUrl, { maxRetriesPerRequest: 2 });
@@ -67,6 +67,7 @@ export async function createTestContext(
     lookupCountry: testLookupCountry,
     now: options.now,
     trackerFile: options.trackerFile,
+    liveAuthTimeoutMs: options.liveAuthTimeoutMs,
   });
   return {
     app,
@@ -79,6 +80,15 @@ export async function createTestContext(
       await prisma.$disconnect();
     },
   };
+}
+
+/** Waits until the check is true. Fails the test after a few seconds. */
+export async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs = 5000) {
+  const start = Date.now();
+  while (!(await check())) {
+    if (Date.now() - start > timeoutMs) throw new Error("waitFor timed out");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
 }
 
 /** Deleting users also deletes their sites, tokens, events and stats. */
