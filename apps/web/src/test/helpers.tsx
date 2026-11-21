@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { vi } from "vitest";
+import { BREAKDOWN_KINDS, type BreakdownKind, type BreakdownRow } from "@countmetrics/shared";
 import { AppRoutes } from "../App";
 import { AppProviders } from "../providers";
 
@@ -69,13 +70,41 @@ export const site = {
   createdAt: "2026-03-10T12:00:00.000Z",
 };
 
-export const overview = (pageviews: number, events = 0) => ({
-  range: "30m",
-  pageviews,
-  events,
-  visitors: pageviews > 0 ? 1 : 0,
-  currentVisitors: 0,
-});
+interface DashboardData {
+  pageviews?: number;
+  events?: number;
+  visitors?: number;
+  currentVisitors?: number;
+  points?: { time: string; pageviews: number; visitors: number }[];
+  lists?: Partial<Record<BreakdownKind, BreakdownRow[]>>;
+}
+
+/** All the requests the dashboard makes for the test site. Without options, the site has no data. */
+export function dashboardRoutes(data: DashboardData = {}): Record<string, Handler> {
+  const base = `/api/sites/${site.id}`;
+  const routes: Record<string, Handler> = {
+    [`GET ${base}`]: { body: { site } },
+    [`GET ${base}/stats/overview`]: {
+      body: {
+        range: "24h",
+        pageviews: data.pageviews ?? 0,
+        events: data.events ?? 0,
+        visitors: data.visitors ?? 0,
+        currentVisitors: data.currentVisitors ?? 0,
+      },
+    },
+    [`GET ${base}/stats/timeseries`]: {
+      body: {
+        range: "24h",
+        points: data.points ?? [{ time: "2026-03-10T12:00:00Z", pageviews: 0, visitors: 0 }],
+      },
+    },
+  };
+  for (const kind of BREAKDOWN_KINDS) {
+    routes[`GET ${base}/stats/${kind}`] = { body: { range: "24h", rows: data.lists?.[kind] ?? [] } };
+  }
+  return routes;
+}
 
 /** No session: the refresh cookie is missing. */
 export const LOGGED_OUT = {

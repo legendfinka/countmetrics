@@ -2,6 +2,8 @@ import type { ZodType, ZodTypeDef } from "zod";
 import { authResponseSchema, type AuthResponse } from "@countmetrics/shared";
 
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+/** The same server for WebSockets: http becomes ws, https becomes wss. */
+export const WS_URL = API_URL.replace(/^http/, "ws");
 
 export class ApiError extends Error {
   constructor(
@@ -21,6 +23,10 @@ let onSessionLost: (() => void) | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
+}
+
+export function getAccessToken(): string | null {
+  return accessToken;
 }
 
 /** Called when the session can't be renewed. The app then shows the login page. */

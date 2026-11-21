@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { overviewSchema, siteSchema } from "@countmetrics/shared";
+import { siteSchema } from "@countmetrics/shared";
 import { api } from "../../lib/api";
 
 const sitesResponse = z.object({ sites: z.array(siteSchema) });
@@ -24,7 +24,7 @@ export function useCreateSite() {
     mutationFn: async (domain: string) =>
       (await api("/api/sites", { method: "POST", body: { domain }, schema: siteResponse })).site,
     onSuccess: (site) => {
-      // The site page can show it right away
+      // The dashboard can show it right away
       queryClient.setQueryData(["sites", site.id], site);
       void queryClient.invalidateQueries({ queryKey: ["sites"], exact: true });
     },
@@ -41,11 +41,3 @@ export function useDeleteSite() {
     },
   });
 }
-
-/** Asks every 3 seconds if the site got its first events (last 30 minutes). */
-export const useSiteActivity = (id: string) =>
-  useQuery({
-    queryKey: ["overview", id],
-    queryFn: () => api(`/api/sites/${id}/stats/overview?range=30m`, { schema: overviewSchema }),
-    refetchInterval: 3000,
-  });
