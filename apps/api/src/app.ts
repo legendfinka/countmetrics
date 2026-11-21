@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import cookie from "@fastify/cookie";
 import cors, { type FastifyCorsOptions } from "@fastify/cors";
 import jwt from "@fastify/jwt";
@@ -25,6 +26,7 @@ import { createStatsService } from "./modules/stats/stats.service.js";
 import { sitesRoutes } from "./modules/sites/sites.routes.js";
 import { createSitesRepository } from "./modules/sites/sites.repository.js";
 import { createSitesService } from "./modules/sites/sites.service.js";
+import { trackerRoutes } from "./modules/tracker/tracker.routes.js";
 
 export interface AppDeps {
   config: Config;
@@ -35,9 +37,15 @@ export interface AppDeps {
   lookupCountry?: (ip: string) => string | null;
   /** Clock for the stats. Tests set a fixed time. */
   now?: () => Date;
+  /** The built tracker script. Tests use a temporary file. */
+  trackerFile?: string;
 }
 
 const INGEST_PATH = "/api/event";
+// From apps/api/src (or apps/api/dist) up to the repository root
+const DEFAULT_TRACKER_FILE = fileURLToPath(
+  new URL("../../../packages/tracker/dist/tracker.js", import.meta.url),
+);
 
 /** Builds the app but does not start it. Tests use app.inject(). */
 export async function buildApp({
@@ -47,6 +55,7 @@ export async function buildApp({
   queue,
   lookupCountry = geoipLookupCountry,
   now,
+  trackerFile = DEFAULT_TRACKER_FILE,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV !== "test",
@@ -68,7 +77,11 @@ export async function buildApp({
         null,
         request.url.startsWith(INGEST_PATH)
           ? { origin: "*", methods: ["POST", "OPTIONS"], maxAge: 86_400 }
-          : { origin: config.CORS_ORIGIN, credentials: true },
+          : {
+              origin: config.CORS_ORIGIN,
+              credentials: true,
+              methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+            },
       );
     };
   });
@@ -104,6 +117,7 @@ export async function buildApp({
   await app.register(sitesRoutes({ service: sitesService }), { prefix: "/api/sites" });
   await app.register(ingestRoutes({ service: ingestService }), { prefix: INGEST_PATH });
   await app.register(statsRoutes({ service: statsService }), { prefix: "/api/sites/:id/stats" });
+  await app.register(trackerRoutes({ file: trackerFile }));
 
   return app;
 }

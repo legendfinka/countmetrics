@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  email: z.string().trim().email().max(254).toLowerCase(),
-  password: z.string().min(8).max(128),
-  name: z.string().trim().min(1).max(100),
+  email: z.string().trim().email("Enter a valid email address").max(254).toLowerCase(),
+  password: z.string().min(8, "Use at least 8 characters").max(128, "Use at most 128 characters"),
+  name: z.string().trim().min(1, "Enter your name").max(100),
 });
 
 export const loginSchema = z.object({
-  email: z.string().trim().email().max(254).toLowerCase(),
-  password: z.string().min(1).max(128),
+  email: z.string().trim().email("Enter a valid email address").max(254).toLowerCase(),
+  password: z.string().min(1, "Enter your password").max(128),
 });
 
 export const publicUserSchema = z.object({

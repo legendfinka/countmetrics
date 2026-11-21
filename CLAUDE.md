@@ -147,6 +147,7 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 
 - `pnpm install` — install dependencies
 - `docker compose up -d` — start Postgres + Redis
+- `pnpm --filter @countmetrics/tracker build` — build the tracker (the API serves it at `/tracker.js`)
 - `pnpm dev` — run web, api and worker in dev mode
 - `pnpm lint` / `pnpm typecheck` / `pnpm test` — must all pass before committing
 - `pnpm --filter api prisma migrate dev` — run migrations

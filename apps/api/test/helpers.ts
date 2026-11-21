@@ -54,7 +54,7 @@ export interface TestContext {
 
 export async function createTestContext(
   overrides: Partial<Config> = {},
-  options: { now?: () => Date } = {},
+  options: { now?: () => Date; trackerFile?: string } = {},
 ): Promise<TestContext> {
   const prisma = new PrismaClient({ datasourceUrl: dbUrl });
   const redis = new Redis(redisUrl, { maxRetriesPerRequest: 2 });
@@ -66,6 +66,7 @@ export async function createTestContext(
     queue,
     lookupCountry: testLookupCountry,
     now: options.now,
+    trackerFile: options.trackerFile,
   });
   return {
     app,
