@@ -1,0 +1,30 @@
+@import "@fontsource/open-sans/400.css";
+@import "@fontsource/open-sans/600.css";
+@import "@fontsource/open-sans/700.css";
+@import "tailwindcss";
+
+/* Calm colours. Soft contrast, easy on the eyes. */
+@theme {
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-page: #f4f6f8;
+  --color-ink: #2c3e50;
+  --color-muted: #6b7785;
+  --color-line: #e3e8ee;
+  --color-bar: #2f3e4e;
+  --color-brand: #2f7fc1;
+  --color-brand-dark: #2a70ab;
+  --color-good: #3daa8a;
+  --color-bad: #d9645b;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
