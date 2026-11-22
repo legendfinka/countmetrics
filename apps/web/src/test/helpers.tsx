@@ -80,10 +80,11 @@ interface DashboardData {
 }
 
 /** All the requests the dashboard makes for the test site. Without options, the site has no data. */
-export function dashboardRoutes(data: DashboardData = {}): Record<string, Handler> {
-  const base = `/api/sites/${site.id}`;
+export function dashboardRoutes(data: DashboardData = {}, target = site): Record<string, Handler> {
+  const base = `/api/sites/${target.id}`;
   const routes: Record<string, Handler> = {
-    [`GET ${base}`]: { body: { site } },
+    [`GET ${base}`]: { body: { site: target } },
+    [`GET ${base}/simulate`]: { body: { state: "idle", secondsLeft: 0 } },
     [`GET ${base}/stats/overview`]: {
       body: {
         range: "24h",

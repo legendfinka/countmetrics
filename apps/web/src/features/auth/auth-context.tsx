@@ -26,6 +26,7 @@ interface AuthContextValue {
   state: AuthState;
   login: (input: LoginInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
+  loginAsDemo: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -78,6 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [startSession],
   );
 
+  const loginAsDemo = useCallback(async () => {
+    startSession(
+      await api("/api/auth/demo", { method: "POST", auth: false, schema: authResponseSchema }),
+    );
+  }, [startSession]);
+
   const logout = useCallback(async () => {
     try {
       await api("/api/auth/logout", { method: "POST", auth: false });
@@ -89,7 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ status: "anonymous" });
   }, [queryClient]);
 
-  const value = useMemo(() => ({ state, login, register, logout }), [state, login, register, logout]);
+  const value = useMemo(
+    () => ({ state, login, register, loginAsDemo, logout }),
+    [state, login, register, loginAsDemo, logout],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

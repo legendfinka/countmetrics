@@ -9,6 +9,7 @@ import { ApiError, errorMessage } from "../../lib/api";
 import { cn } from "../../lib/utils";
 import { LiveBadge } from "../live/live-badge";
 import { useLiveSite } from "../live/use-live-site";
+import { SimulateButton } from "../simulator/simulate-button";
 import { Snippet } from "../sites/snippet";
 import { useSite } from "../sites/sites-api";
 import { BreakdownCard } from "./breakdown-card";
@@ -102,7 +103,10 @@ export function DashboardPage() {
             <h1 className="text-2xl font-semibold">{site.data.domain}</h1>
             <LiveBadge status={liveStatus} />
           </div>
-          <RangeSwitch value={range} onChange={changeRange} />
+          <div className="flex flex-wrap items-start gap-3">
+            <SimulateButton siteId={id} />
+            <RangeSwitch value={range} onChange={changeRange} />
+          </div>
         </div>
       </div>
 

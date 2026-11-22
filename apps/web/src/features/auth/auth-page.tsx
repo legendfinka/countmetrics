@@ -1,6 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card } from "../../components/ui/card";
+import { TryDemoButton } from "./try-demo-button";
 
 interface AuthPageProps {
   title: string;
@@ -19,6 +20,12 @@ export function AuthPage({ title, children, footer }: AuthPageProps) {
       <Card className="w-full max-w-sm p-6">
         <h1 className="mb-5 text-xl font-semibold">{title}</h1>
         {children}
+        <div className="my-5 flex items-center gap-3 text-xs uppercase tracking-wide text-muted">
+          <span aria-hidden="true" className="h-px flex-1 bg-line" />
+          or
+          <span aria-hidden="true" className="h-px flex-1 bg-line" />
+        </div>
+        <TryDemoButton />
       </Card>
       <p className="mt-5 text-sm text-muted">{footer}</p>
     </div>

@@ -1,5 +1,6 @@
 import { BarChart3, LogOut } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
+import { DEMO_USER_ID } from "@countmetrics/shared";
 import { useUser } from "../features/auth/auth-context";
 
 /** The page frame for logged-in users: a dark top bar and the page below it. */
@@ -27,6 +28,14 @@ export function Layout() {
           </div>
         </div>
       </header>
+      {user.id === DEMO_USER_ID && (
+        <div className="bg-brand/10 text-sm">
+          <p className="mx-auto max-w-4xl px-4 py-2">
+            You are using the <strong>demo account</strong>. It is read-only. Click{" "}
+            <strong>Simulate traffic</strong> to watch the dashboard come alive.
+          </p>
+        </div>
+      )}
       <main className="mx-auto max-w-4xl px-4 py-8">
         <Outlet />
       </main>
