@@ -16,13 +16,19 @@ export interface RateLimitResult {
  * Counts requests per minute in Redis, per IP and per siteKey.
  * Both counters are updated together, so it is one Redis call per request.
  */
-export function createRateLimiter(redis: Redis, limits: RateLimits, now: () => number = Date.now) {
+export function createRateLimiter(
+  redis: Redis,
+  limits: RateLimits,
+  now: () => number = Date.now,
+  /** Each use of the limiter needs its own prefix, so the counters don't mix */
+  prefix = "cm:rl",
+) {
   return {
     async check(ip: string, siteKey: string): Promise<RateLimitResult> {
       const t = now();
       const window = Math.floor(t / WINDOW_MS);
-      const ipKey = `cm:rl:ip:${ip}:${window}`;
-      const siteKeyKey = `cm:rl:site:${siteKey}:${window}`;
+      const ipKey = `${prefix}:ip:${ip}:${window}`;
+      const siteKeyKey = `${prefix}:site:${siteKey}:${window}`;
 
       const results = await redis
         .pipeline()

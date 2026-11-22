@@ -41,6 +41,10 @@ export function authRoutes({ service, config }: Deps): FastifyPluginAsync {
       return sendSession(reply, 200, session);
     });
 
+    app.post("/demo", async (request, reply) => {
+      return sendSession(reply, 200, await service.demoLogin(request.ip));
+    });
+
     app.post("/refresh", async (request, reply) => {
       const token = request.cookies[REFRESH_COOKIE];
       if (!token) throw unauthorized("INVALID_REFRESH_TOKEN", "Missing refresh token");

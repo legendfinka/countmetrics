@@ -6,6 +6,7 @@ import type { AuthResponse, EnrichedEvent } from "@countmetrics/shared";
 import { buildApp } from "../src/app.js";
 import type { Config } from "../src/config.js";
 import type { EventQueue } from "../src/modules/ingest/event-queue.js";
+import type { SimulatorLimits } from "../src/modules/simulator/simulator.service.js";
 
 export const dbUrl = process.env.DATABASE_URL_TEST ?? "";
 export const redisUrl = process.env.REDIS_URL_TEST ?? "";
@@ -54,7 +55,12 @@ export interface TestContext {
 
 export async function createTestContext(
   overrides: Partial<Config> = {},
-  options: { now?: () => Date; trackerFile?: string; liveAuthTimeoutMs?: number } = {},
+  options: {
+    now?: () => Date;
+    trackerFile?: string;
+    liveAuthTimeoutMs?: number;
+    simulatorLimits?: Partial<SimulatorLimits>;
+  } = {},
 ): Promise<TestContext> {
   const prisma = new PrismaClient({ datasourceUrl: dbUrl });
   const redis = new Redis(redisUrl, { maxRetriesPerRequest: 2 });
@@ -68,6 +74,7 @@ export async function createTestContext(
     now: options.now,
     trackerFile: options.trackerFile,
     liveAuthTimeoutMs: options.liveAuthTimeoutMs,
+    simulatorLimits: options.simulatorLimits,
   });
   return {
     app,

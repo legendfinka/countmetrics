@@ -17,6 +17,8 @@ export const unauthorized = (code = "UNAUTHORIZED", message = "Authentication re
 
 export const notFound = (code: string, message: string) => new AppError(404, code, message);
 
+export const forbidden = (code: string, message: string) => new AppError(403, code, message);
+
 export const conflict = (code: string, message: string) => new AppError(409, code, message);
 
 export const tooManyRequests = (retryAfterSeconds: number) =>

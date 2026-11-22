@@ -1,9 +1,15 @@
 import { Prisma } from "@prisma/client";
-import type { LoginInput, PublicUser, RegisterInput } from "@countmetrics/shared";
+import {
+  DEMO_USER_ID,
+  type LoginInput,
+  type PublicUser,
+  type RegisterInput,
+} from "@countmetrics/shared";
 import type { Config } from "../../config.js";
-import { conflict, unauthorized } from "../../lib/errors.js";
+import { conflict, notFound, tooManyRequests, unauthorized } from "../../lib/errors.js";
 import { burnPasswordCheck, hashPassword, verifyPassword } from "../../lib/password.js";
 import { generateRefreshToken, hashToken } from "../../lib/tokens.js";
+import type { RateLimiter } from "../ingest/rate-limiter.js";
 import type { AuthRepository } from "./auth.repository.js";
 
 export interface Session {
@@ -17,6 +23,8 @@ interface Deps {
   repo: AuthRepository;
   config: Pick<Config, "REFRESH_TOKEN_TTL_DAYS">;
   signAccessToken: (userId: string) => string;
+  /** Limits "Try demo" per IP. It is a public endpoint that creates a session. */
+  demoLimiter: Pick<RateLimiter, "check">;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -27,7 +35,7 @@ const toPublicUser = (u: { id: string; email: string; name: string }): PublicUse
   name: u.name,
 });
 
-export function createAuthService({ repo, config, signAccessToken }: Deps) {
+export function createAuthService({ repo, config, signAccessToken, demoLimiter }: Deps) {
   const invalidCredentials = () => unauthorized("INVALID_CREDENTIALS", "Invalid email or password");
   const invalidRefresh = () => unauthorized("INVALID_REFRESH_TOKEN", "Invalid refresh token");
 
@@ -76,6 +84,18 @@ export function createAuthService({ repo, config, signAccessToken }: Deps) {
         throw invalidCredentials();
       }
       if (!(await verifyPassword(user.passwordHash, input.password))) throw invalidCredentials();
+      return startSession(toPublicUser(user));
+    },
+
+    /** Logs in as the shared demo user, without a password. The demo user is read-only. */
+    async demoLogin(ip: string): Promise<Session> {
+      const limit = await demoLimiter.check(ip, "demo");
+      if (!limit.allowed) throw tooManyRequests(limit.retryAfterSeconds);
+
+      const user = await repo.findUserById(DEMO_USER_ID);
+      if (!user) {
+        throw notFound("DEMO_NOT_AVAILABLE", "The demo is not set up yet. Run the seed command.");
+      }
       return startSession(toPublicUser(user));
     },
 

@@ -27,6 +27,11 @@ import { createStatsCache } from "./modules/stats/stats-cache.js";
 import { createStatsRepository } from "./modules/stats/stats.repository.js";
 import { statsRoutes } from "./modules/stats/stats.routes.js";
 import { createStatsService } from "./modules/stats/stats.service.js";
+import {
+  createSimulatorService,
+  type SimulatorLimits,
+} from "./modules/simulator/simulator.service.js";
+import { simulatorRoutes } from "./modules/simulator/simulator.routes.js";
 import { sitesRoutes } from "./modules/sites/sites.routes.js";
 import { createSitesRepository } from "./modules/sites/sites.repository.js";
 import { createSitesService } from "./modules/sites/sites.service.js";
@@ -45,6 +50,8 @@ export interface AppDeps {
   trackerFile?: string;
   /** How long a WebSocket has to log in. Tests use a short time. */
   liveAuthTimeoutMs?: number;
+  /** Limits of the traffic simulator. Tests use short times. */
+  simulatorLimits?: Partial<SimulatorLimits>;
 }
 
 const INGEST_PATH = "/api/event";
@@ -63,6 +70,7 @@ export async function buildApp({
   now,
   trackerFile = DEFAULT_TRACKER_FILE,
   liveAuthTimeoutMs,
+  simulatorLimits,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV !== "test",
@@ -101,9 +109,21 @@ export async function buildApp({
     repo: createAuthRepository(prisma),
     config,
     signAccessToken: (sub) => app.jwt.sign({ sub }, { expiresIn: config.ACCESS_TOKEN_TTL_SECONDS }),
+    // "Try demo" is public, so each IP may use it only a few times per minute
+    demoLimiter: createRateLimiter(redis, { ipPerMin: 10, sitePerMin: 10_000 }, Date.now, "cm:rl:demo"),
   });
   const sitesRepository = createSitesRepository(prisma);
   const sitesService = createSitesService(sitesRepository);
+  const simulatorService = createSimulatorService({
+    sites: sitesRepository,
+    redis,
+    queue,
+    limits: simulatorLimits,
+    log: app.log,
+  });
+  app.addHook("onClose", async () => {
+    await simulatorService.close();
+  });
   // A Redis connection in subscriber mode can't run other commands, so it gets its own
   const hub = createLiveHub(redis.duplicate());
   app.addHook("onClose", async () => {
@@ -144,6 +164,9 @@ export async function buildApp({
   await app.register(statsRoutes({ service: statsService }), { prefix: "/api/sites/:id/stats" });
   await app.register(liveRoutes({ service: liveService, authTimeoutMs: liveAuthTimeoutMs }), {
     prefix: "/api/sites/:id/live",
+  });
+  await app.register(simulatorRoutes({ service: simulatorService }), {
+    prefix: "/api/sites/:id/simulate",
   });
   await app.register(trackerRoutes({ file: trackerFile }));
 
