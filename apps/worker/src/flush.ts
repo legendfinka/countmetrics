@@ -36,10 +36,9 @@ export interface FlushDeps {
  */
 export async function flushJobs(deps: FlushDeps, jobs: PendingJob[]): Promise<void> {
   const now = deps.now ?? Date.now;
-  const hllCounts = await addToMinuteHll(
-    deps.redis,
-    aggregateByMinute(jobs.flatMap((j) => j.events)),
-  );
+  const allEvents = jobs.flatMap((j) => j.events);
+  const allAggregates = aggregateByMinute(allEvents);
+  const hllCounts = await addToMinuteHll(deps.redis, allAggregates);
 
   const stored = await withTransaction(deps.pool, async (client) => {
     const fresh = await claimJobs(
@@ -50,9 +49,11 @@ export async function flushJobs(deps: FlushDeps, jobs: PendingJob[]): Promise<vo
     if (events.length === 0) return events;
 
     await insertEvents(client, events);
+    // Usually no job was skipped, so the groups can be reused
+    const aggregates = events.length === allEvents.length ? allAggregates : aggregateByMinute(events);
     await upsertMinuteStats(
       client,
-      aggregateByMinute(events).map((a) => ({
+      aggregates.map((a) => ({
         siteId: a.siteId,
         bucket: a.bucket,
         pageviews: a.pageviews,

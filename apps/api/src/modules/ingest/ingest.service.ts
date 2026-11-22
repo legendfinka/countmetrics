@@ -39,6 +39,7 @@ export function createIngestService(deps: Deps) {
       if (!limit.allowed) throw tooManyRequests(limit.retryAfterSeconds);
 
       const at = now();
+      const createdAt = at.toISOString();
       const userAgent = rawUserAgent.slice(0, MAX_USER_AGENT_LENGTH);
       const salt = await deps.salts.getSalt(at);
       const visitorHash = computeVisitorHash(salt, body.siteKey, ip, userAgent);
@@ -54,7 +55,7 @@ export function createIngestService(deps: Deps) {
         device,
         browser,
         visitorHash,
-        createdAt: at.toISOString(),
+        createdAt,
       }));
 
       await deps.queue.enqueue(events);
