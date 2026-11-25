@@ -23,7 +23,8 @@ export const statsQuerySchema = z.object({
 });
 
 export const breakdownQuerySchema = statsQuerySchema.extend({
-  limit: z.coerce.number().int().min(1).max(50).default(10),
+  // High enough for the world map to get every country
+  limit: z.coerce.number().int().min(1).max(250).default(10),
 });
 
 // ---------- Responses ----------

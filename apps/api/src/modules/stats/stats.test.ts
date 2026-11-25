@@ -155,7 +155,7 @@ describe("access", () => {
     }
   });
 
-  it.each(["overview?range=1y", "pages?limit=0", "pages?limit=51", "pages?limit=abc"])(
+  it.each(["overview?range=1y", "pages?limit=0", "pages?limit=251", "pages?limit=abc"])(
     "rejects bad input: %s",
     async (path) => {
       const res = await get(path);

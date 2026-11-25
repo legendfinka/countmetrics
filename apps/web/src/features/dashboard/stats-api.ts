@@ -33,11 +33,13 @@ export const useTimeseries = (siteId: string, range: StatsRange) =>
     placeholderData: keepPreviousData,
   });
 
-export const useBreakdown = (siteId: string, kind: BreakdownKind, range: StatsRange) =>
+export const useBreakdown = (siteId: string, kind: BreakdownKind, range: StatsRange, limit = 10) =>
   useQuery({
-    queryKey: statsKey(siteId, kind, range),
+    queryKey: statsKey(siteId, kind, range, limit),
     queryFn: () =>
-      api(`/api/sites/${siteId}/stats/${kind}?range=${range}&limit=10`, { schema: breakdownSchema }),
+      api(`/api/sites/${siteId}/stats/${kind}?range=${range}&limit=${limit}`, {
+        schema: breakdownSchema,
+      }),
     refetchInterval: REFRESH_MS,
     placeholderData: keepPreviousData,
   });

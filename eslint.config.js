@@ -21,6 +21,7 @@ export default tseslint.config(
       "apps/worker/**/*.ts",
       "*.config.{js,ts}",
       "scripts/*.mjs",
+      "apps/web/scripts/*.mjs",
       "packages/tracker/scripts/*.mjs",
       "packages/tracker/demo/server.mjs",
     ],

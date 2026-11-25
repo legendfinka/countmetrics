@@ -24,6 +24,7 @@ import { RangeSwitch } from "./range-switch";
 import { StatCards } from "./stat-cards";
 import { useOverview } from "./stats-api";
 import { TimeseriesCard } from "./timeseries-card";
+import { WorldMapCard } from "./world-map-card";
 
 const LISTS: { kind: BreakdownKind; title: string; label?: (name: string) => string }[] = [
   { kind: "pages", title: "Top pages" },
@@ -125,6 +126,7 @@ export function DashboardPage() {
       <div className={cn("space-y-6 transition-opacity", overview.isPlaceholderData && "opacity-60")}>
         <StatCards overview={overview.data} />
         <TimeseriesCard siteId={id} range={range} />
+        <WorldMapCard siteId={id} range={range} />
         <div className="grid gap-6 md:grid-cols-2">
           {LISTS.map((list) => (
             <BreakdownCard key={list.kind} siteId={id} range={range} {...list} />
