@@ -1,4 +1,4 @@
-# Free setup on Render: one web service (API + worker) and one Redis. See DEPLOY.md.
+# Free setup on Render: one web service (API + worker) and one Redis
 services:
   - type: web
     name: countmetrics-api
