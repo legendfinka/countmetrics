@@ -2,6 +2,7 @@
 services:
   - type: web
     name: countmetrics-api
+    region: frankfurt
     runtime: node
     plan: free
     buildCommand: >-
@@ -35,6 +36,7 @@ services:
 
   - type: keyvalue
     name: countmetrics-redis
+    region: frankfurt
     plan: free
     # The queue must never lose jobs to make room
     maxmemoryPolicy: noeviction
