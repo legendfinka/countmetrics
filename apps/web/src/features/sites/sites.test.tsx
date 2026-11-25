@@ -59,10 +59,10 @@ describe("add a site", () => {
     const server = mockApi({ ...LOGGED_IN, "GET /api/sites": { body: { sites: [] } } });
     renderApp("/sites");
 
-    await userEvent.type(await screen.findByLabelText("Domain"), "https://example.com/page");
+    await userEvent.type(await screen.findByLabelText("Domain"), "exa mple.com");
     await userEvent.click(screen.getByRole("button", { name: "Add site" }));
 
-    expect(await screen.findByText(/Must be a hostname/)).toBeInTheDocument();
+    expect(await screen.findByText(/Must be an address/)).toBeInTheDocument();
     expect(server.count("POST /api/sites")).toBe(0);
   });
 

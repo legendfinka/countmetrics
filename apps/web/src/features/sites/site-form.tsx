@@ -37,7 +37,7 @@ export function SiteForm({ onCreated }: { onCreated: (siteId: string) => void })
           name="domain"
           label="Domain"
           placeholder="example.com"
-          hint="Only the domain, without http:// or a path."
+          hint="You can paste a full address. We keep only the domain."
           autoComplete="off"
           value={domain}
           onChange={(event) => setDomain(event.target.value)}

@@ -75,7 +75,17 @@ describe("create and list", () => {
     expect(sites.map((s) => s.domain)).toEqual(["alice.com"]);
   });
 
-  it.each(["http://example.com", "example.com/path", "exa mple.com", "", "-bad.com"])(
+  it.each([
+    "https://ownsprint.vercel.app/",
+    "http://Ownsprint.vercel.app:80/page?x=1#top",
+    "ownsprint.vercel.app/path",
+  ])("keeps only the hostname of %j", async (input) => {
+    const { accessToken } = await registerUser(ctx.app);
+    const site = await createSite(accessToken, input);
+    expect(site.domain).toBe("ownsprint.vercel.app");
+  });
+
+  it.each(["ftp://example.com", "https://", "exa mple.com", "", "-bad.com"])(
     "rejects invalid domain %j",
     async (domain) => {
       const { accessToken } = await registerUser(ctx.app);
