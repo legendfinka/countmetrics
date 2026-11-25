@@ -30,6 +30,22 @@ describe("batcher", () => {
     expect(batches).toEqual([[1, 2, 3]]);
   });
 
+  it("flushes at the item limit without waiting for the size or the timer", async () => {
+    const batches: number[][] = [];
+    const batcher = createBatcher<number>({
+      maxWeight: 500,
+      maxItems: 2,
+      flushIntervalMs: 1000,
+      weigh: () => 1,
+      flush: async (items) => {
+        batches.push(items);
+        return items.map(() => null);
+      },
+    });
+    await Promise.all([batcher.add(1), batcher.add(2)]);
+    expect(batches).toEqual([[1, 2]]);
+  });
+
   it("flushes a small batch only after the interval", async () => {
     const { batcher, flush } = setup({ flushIntervalMs: 1000 });
     const done = batcher.add(1);

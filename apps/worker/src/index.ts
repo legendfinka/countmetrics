@@ -14,14 +14,28 @@ const redis = new Redis(config.REDIS_URL);
 const queueConnection = new Redis(config.REDIS_URL, { maxRetriesPerRequest: null });
 redis.on("error", (err) => log.error("redis error", err));
 
+// Printing every save would slow the worker down, so we print totals now and then
+const saved = { batches: 0, events: 0, failed: 0 };
+const report = setInterval(() => {
+  if (saved.batches === 0) return;
+  log.info(
+    `saved ${saved.events} events in ${saved.batches} batches${saved.failed ? ` (${saved.failed} jobs failed)` : ""}`,
+  );
+  Object.assign(saved, { batches: 0, events: 0, failed: 0 });
+}, 5000);
+report.unref();
+
 const eventWorker = createEventWorker({
   config,
   pool,
   redis,
   queueConnection,
   log,
-  onFlush: ({ jobs, events, failed }) =>
-    log.info(`flushed ${events} events from ${jobs} jobs${failed ? ` (${failed} failed)` : ""}`),
+  onFlush: ({ events, failed }) => {
+    saved.batches++;
+    saved.events += events;
+    saved.failed += failed;
+  },
 });
 
 const cleanup = setInterval(

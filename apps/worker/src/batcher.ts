@@ -1,6 +1,8 @@
 export interface BatcherOptions<T> {
   /** Save as soon as the buffer reaches this weight (weight = number of events). */
   maxWeight: number;
+  /** Also save at this many items. Use it when no more items can arrive before a save. */
+  maxItems?: number;
   /** Save at the latest this long after the first item arrives. */
   flushIntervalMs: number;
   weigh: (item: T) => number;
@@ -30,6 +32,7 @@ export interface Batcher<T> {
  */
 export function createBatcher<T>({
   maxWeight,
+  maxItems = Infinity,
   flushIntervalMs,
   weigh,
   flush,
@@ -68,7 +71,7 @@ export function createBatcher<T>({
       return new Promise<void>((resolve, reject) => {
         buffer.push({ item, resolve, reject });
         weight += weigh(item);
-        if (weight >= maxWeight) void drain();
+        if (weight >= maxWeight || buffer.length >= maxItems) void drain();
         else if (!timer) timer = setTimeout(() => void drain(), flushIntervalMs);
       });
     },

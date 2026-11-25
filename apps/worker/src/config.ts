@@ -8,9 +8,9 @@ const envSchema = z.object({
   WORKER_BATCH_SIZE: z.coerce.number().int().positive().default(500),
   /** ...or after this many milliseconds. Whichever comes first. */
   WORKER_FLUSH_INTERVAL_MS: z.coerce.number().int().positive().default(1000),
-  /** Jobs handled at the same time. A job has 1-20 events.
-   *  Keep this well above WORKER_BATCH_SIZE / 20, or the buffer never fills. */
-  WORKER_CONCURRENCY: z.coerce.number().int().positive().default(200),
+  /** Jobs handled at the same time. Most jobs have 1 event,
+   *  so keep this at WORKER_BATCH_SIZE or more to fill a batch. */
+  WORKER_CONCURRENCY: z.coerce.number().int().positive().default(500),
 });
 
 export type Config = z.infer<typeof envSchema>;

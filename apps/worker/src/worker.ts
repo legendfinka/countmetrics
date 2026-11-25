@@ -24,6 +24,8 @@ export function createEventWorker(deps: EventWorkerDeps) {
 
   const batcher = createBatcher<PendingJob>({
     maxWeight: deps.config.WORKER_BATCH_SIZE,
+    // A job waits here until it is saved. When all job slots are full, waiting is pointless.
+    maxItems: deps.config.WORKER_CONCURRENCY,
     flushIntervalMs: deps.config.WORKER_FLUSH_INTERVAL_MS,
     weigh: (job) => job.events.length,
     flush: async (jobs) => {
