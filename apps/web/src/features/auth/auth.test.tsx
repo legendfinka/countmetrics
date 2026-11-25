@@ -66,6 +66,16 @@ describe("login", () => {
     expect(sites?.headers.get("authorization")).toBe("Bearer token-1");
   });
 
+  it("always opens the sites page, even after a visit to a dashboard", async () => {
+    mockApi({ ...LOGGED_OUT, "POST /api/auth/login": { body: session }, ...noSites });
+    // Like after logging out on a dashboard: the app sends you to the login page
+    renderApp("/sites/00000000-0000-4000-8000-0000000000aa");
+
+    await fillAndSubmit({ Email: "alice@example.com", Password: "password123" }, "Log in");
+
+    expect(await screen.findByRole("heading", { name: "Your sites" })).toBeInTheDocument();
+  });
+
   it("shows the error from the server for a wrong password", async () => {
     mockApi({
       ...LOGGED_OUT,

@@ -44,7 +44,7 @@ export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCance
         <h2 id={titleId} className="text-lg font-semibold">
           {title}
         </h2>
-        <p id={messageId} className="mt-2 break-words text-sm text-muted">
+        <p id={messageId} className="mt-2 wrap-break-word text-sm text-muted">
           {message}
         </p>
         <div className="mt-5 flex justify-end gap-2">
