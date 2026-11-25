@@ -1,7 +1,8 @@
-import { BarChart3, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { DEMO_USER_ID } from "@countmetrics/shared";
 import { useUser } from "../features/auth/auth-context";
+import { Logo } from "./logo";
 
 /** The page frame for logged-in users: a dark top bar and the page below it. */
 export function Layout() {
@@ -12,7 +13,7 @@ export function Layout() {
       <header className="bg-bar text-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link to="/sites" className="flex items-center gap-2 text-lg font-bold">
-            <BarChart3 size={22} aria-hidden="true" />
+            <Logo size={28} />
             CountMetrics
           </Link>
           <div className="flex items-center gap-4 text-sm">

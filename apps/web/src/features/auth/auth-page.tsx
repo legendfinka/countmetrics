@@ -1,5 +1,5 @@
-import { BarChart3 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Logo } from "../../components/logo";
 import { Card } from "../../components/ui/card";
 import { TryDemoButton } from "./try-demo-button";
 
@@ -13,9 +13,17 @@ interface AuthPageProps {
 export function AuthPage({ title, children, footer }: AuthPageProps) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
-      <div className="mb-6 flex items-center gap-2 text-2xl font-bold text-bar">
-        <BarChart3 size={28} className="text-brand" aria-hidden="true" />
-        CountMetrics
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Logo size={72} className="mb-3 drop-shadow-md" />
+        <p className="text-3xl font-bold text-bar">CountMetrics</p>
+        <p className="mt-1 text-muted">Live web analytics that respects privacy</p>
+        <ul className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-semibold text-brand-dark">
+          {["No cookies", "Real-time", "No stored IPs"].map((feature) => (
+            <li key={feature} className="rounded-full bg-brand/10 px-3 py-1">
+              {feature}
+            </li>
+          ))}
+        </ul>
       </div>
       <Card className="w-full max-w-sm p-6">
         <h1 className="mb-5 text-xl font-semibold">{title}</h1>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#2f7fc1"/>
+  <g fill="#fff">
+    <rect x="14" y="36" width="9" height="15" rx="3"/>
+    <rect x="27.5" y="27" width="9" height="24" rx="3"/>
+    <rect x="41" y="18" width="9" height="33" rx="3"/>
+  </g>
+  <!-- The "live" dot -->
+  <circle cx="18.500" cy="18" r="5" fill="#7ee0bf"/>
+</svg>

@@ -1,6 +1,7 @@
 import { Globe, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Site } from "@countmetrics/shared";
+import { Logo } from "../../components/logo";
 import { Alert, Loading } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -69,9 +70,12 @@ export function SitesPage() {
         )}
 
         {sites.isSuccess && sites.data.length === 0 && (
-          <p className="py-6 text-center text-sm text-muted">
-            No sites yet. Add your first website above.
-          </p>
+          <div className="flex flex-col items-center gap-3 py-6">
+            <Logo size={48} />
+            <p className="text-center text-sm text-muted">
+              No sites yet. Add your first website above.
+            </p>
+          </div>
         )}
 
         {sites.isSuccess && sites.data.length > 0 && (
