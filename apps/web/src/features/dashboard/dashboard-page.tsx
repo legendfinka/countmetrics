@@ -1,7 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { statsRangeSchema, type BreakdownKind, type StatsRange } from "@countmetrics/shared";
+import {
+  DEMO_SITE_ID,
+  statsRangeSchema,
+  type BreakdownKind,
+  type StatsRange,
+} from "@countmetrics/shared";
 import { Alert, Loading } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { Card, CardTitle } from "../../components/ui/card";
@@ -10,6 +15,7 @@ import { cn } from "../../lib/utils";
 import { LiveBadge } from "../live/live-badge";
 import { useLiveSite } from "../live/use-live-site";
 import { SimulateButton } from "../simulator/simulate-button";
+import { ClearDataButton } from "../sites/clear-data-button";
 import { Snippet } from "../sites/snippet";
 import { useSite } from "../sites/sites-api";
 import { BreakdownCard } from "./breakdown-card";
@@ -76,6 +82,8 @@ export function DashboardPage() {
     );
   }
 
+  // Fake traffic is only for the demo site, so it can't mix with real visits
+  const isDemo = site.data.id === DEMO_SITE_ID;
   const empty = overview.isSuccess && overview.data.pageviews + overview.data.events === 0;
   const snippetOpen = snippetChoice ?? empty;
   const tracker = (
@@ -104,7 +112,7 @@ export function DashboardPage() {
             <LiveBadge status={liveStatus} />
           </div>
           <div className="flex flex-wrap items-start gap-3">
-            <SimulateButton siteId={id} />
+            {isDemo && <SimulateButton siteId={id} />}
             <RangeSwitch value={range} onChange={changeRange} />
           </div>
         </div>
@@ -125,6 +133,8 @@ export function DashboardPage() {
       </div>
 
       {!empty && tracker}
+
+      {!isDemo && <ClearDataButton siteId={id} domain={site.data.domain} />}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { DEMO_SITE_ID } from "@countmetrics/shared";
 import { LOGGED_IN, apiError, dashboardRoutes, mockApi, renderApp, site } from "../../test/helpers";
 import { SimulateButton } from "./simulate-button";
 
@@ -86,10 +87,36 @@ describe("SimulateButton", () => {
 });
 
 describe("on the dashboard", () => {
-  it("is next to the time range", async () => {
+  it("is shown for the demo site, without Clear data", async () => {
+    const demo = { ...site, id: DEMO_SITE_ID };
+    mockApi({ ...LOGGED_IN, ...dashboardRoutes({}, demo) });
+    renderApp(`/sites/${DEMO_SITE_ID}`);
+
+    expect(await screen.findByRole("button", { name: "Simulate traffic" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Clear data" })).not.toBeInTheDocument();
+  });
+
+  it("is hidden for your own site, which has Clear data instead", async () => {
     mockApi({ ...LOGGED_IN, ...dashboardRoutes() });
     renderApp(`/sites/${site.id}`);
 
-    expect(await screen.findByRole("button", { name: "Simulate traffic" })).toBeEnabled();
+    expect(await screen.findByRole("button", { name: "Clear data" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Simulate traffic" })).not.toBeInTheDocument();
+  });
+
+  it("clears the data only after you confirm", async () => {
+    const route = `DELETE /api/sites/${site.id}/data`;
+    const server = mockApi({ ...LOGGED_IN, ...dashboardRoutes(), [route]: { status: 204 } });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderApp(`/sites/${site.id}`);
+    const button = await screen.findByRole("button", { name: "Clear data" });
+
+    await userEvent.click(button);
+    expect(server.count(route)).toBe(0);
+
+    confirm.mockReturnValue(true);
+    await userEvent.click(button);
+    await waitFor(() => expect(server.count(route)).toBe(1));
+    confirm.mockRestore();
   });
 });

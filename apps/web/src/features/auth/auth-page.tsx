@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Footer } from "../../components/footer";
 import { Logo } from "../../components/logo";
 import { Card } from "../../components/ui/card";
 import { TryDemoButton } from "./try-demo-button";
@@ -36,6 +37,7 @@ export function AuthPage({ title, children, footer }: AuthPageProps) {
         <TryDemoButton />
       </Card>
       <p className="mt-5 text-sm text-muted">{footer}</p>
+      <Footer />
     </div>
   );
 }

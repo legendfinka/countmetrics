@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { Link, Outlet } from "react-router-dom";
 import { DEMO_USER_ID } from "@countmetrics/shared";
 import { useUser } from "../features/auth/auth-context";
+import { Footer } from "./footer";
 import { Logo } from "./logo";
 
 /** The page frame for logged-in users: a dark top bar and the page below it. */
@@ -9,7 +10,7 @@ export function Layout() {
   const { user, logout } = useUser();
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="bg-bar text-white">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link to="/sites" className="flex items-center gap-2 text-lg font-bold">
@@ -37,9 +38,11 @@ export function Layout() {
           </p>
         </div>
       )}
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      {/* flex-1 keeps the footer at the bottom of short pages */}
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 }

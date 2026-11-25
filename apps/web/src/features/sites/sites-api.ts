@@ -31,6 +31,15 @@ export function useCreateSite() {
   });
 }
 
+export function useClearSiteData(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api(`/api/sites/${id}/data`, { method: "DELETE" }),
+    // Load the empty numbers right away
+    onSuccess: () => queryClient.resetQueries({ queryKey: ["stats", id] }),
+  });
+}
+
 export function useDeleteSite() {
   const queryClient = useQueryClient();
   return useMutation({
