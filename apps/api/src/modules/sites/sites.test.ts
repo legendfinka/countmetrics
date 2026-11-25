@@ -36,6 +36,7 @@ describe("authentication", () => {
       { method: "GET", url: `/api/sites/${id}` },
       { method: "PATCH", url: `/api/sites/${id}`, payload: { domain: "example.com" } },
       { method: "DELETE", url: `/api/sites/${id}` },
+      { method: "DELETE", url: `/api/sites/${id}/data` },
     ] as const;
 
     for (const call of calls) {
@@ -99,6 +100,67 @@ describe("create and list", () => {
       expect(res.json().error.code).toBe("VALIDATION_ERROR");
     },
   );
+});
+
+describe("clear data", () => {
+  async function addVisit(siteId: string) {
+    await ctx.prisma.event.create({
+      data: {
+        siteId,
+        type: "pageview",
+        path: "/",
+        device: "desktop",
+        browser: "Chrome",
+        visitorHash: "a".repeat(32),
+        createdAt: new Date(),
+      },
+    });
+    await ctx.prisma.statsMinute.create({
+      data: { siteId, bucket: new Date(), pageviews: 1, visitors: 1, events: 0 },
+    });
+    await ctx.redis.set(`cm:stats:${siteId}:overview:24h`, "{}");
+    await ctx.redis.set(`cm:hll:${siteId}:2026-03-10T12:00`, "x");
+    await ctx.redis.zadd(`cm:live:${siteId}`, Date.now(), "visitor");
+  }
+
+  const clear = (siteId: string, accessToken: string) =>
+    ctx.app.inject({
+      method: "DELETE",
+      url: `/api/sites/${siteId}/data`,
+      headers: bearer(accessToken),
+    });
+
+  const countRows = async (siteId: string) =>
+    (await ctx.prisma.event.count({ where: { siteId } })) +
+    (await ctx.prisma.statsMinute.count({ where: { siteId } }));
+
+  it("deletes the visits of this site only, and keeps the site", async () => {
+    const { accessToken } = await registerUser(ctx.app);
+    const mine = await createSite(accessToken, "a.com");
+    const other = await createSite(accessToken, "b.com");
+    await addVisit(mine.id);
+    await addVisit(other.id);
+
+    expect((await clear(mine.id, accessToken)).statusCode).toBe(204);
+
+    expect(await countRows(mine.id)).toBe(0);
+    expect(await countRows(other.id)).toBe(2);
+    expect(await ctx.redis.keys(`*${mine.id}*`)).toEqual([]);
+    expect(await ctx.redis.keys(`*${other.id}*`)).toHaveLength(3);
+    expect(await ctx.prisma.site.count({ where: { id: mine.id } })).toBe(1);
+  });
+
+  it("can't clear another user's site", async () => {
+    const alice = await registerUser(ctx.app, "alice@example.com");
+    const bob = await registerUser(ctx.app, "bob@example.com");
+    const site = await createSite(alice.accessToken);
+    await addVisit(site.id);
+
+    const res = await clear(site.id, bob.accessToken);
+
+    expect(res.statusCode).toBe(404);
+    expect(await countRows(site.id)).toBe(2);
+  });
 });
 
 describe("ownership", () => {

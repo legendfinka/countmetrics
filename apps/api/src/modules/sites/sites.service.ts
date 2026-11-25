@@ -17,7 +17,11 @@ function assertNotDemo(userId: string): void {
   }
 }
 
-export function createSitesService(repo: SitesRepository) {
+export function createSitesService(
+  repo: SitesRepository,
+  /** Removes what Redis remembers about a site's visits */
+  forgetStats: (siteId: string) => Promise<void>,
+) {
   async function getOwned(userId: string, id: string) {
     const site = await repo.findOwned(userId, id);
     if (!site) throw notFound("SITE_NOT_FOUND", "Site not found");
@@ -48,6 +52,13 @@ export function createSitesService(repo: SitesRepository) {
       assertNotDemo(userId);
       await getOwned(userId, id);
       await repo.delete(id);
+    },
+
+    async clearData(userId: string, id: string): Promise<void> {
+      assertNotDemo(userId);
+      await getOwned(userId, id);
+      await repo.clearData(id);
+      await forgetStats(id);
     },
   };
 }

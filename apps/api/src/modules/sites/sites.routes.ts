@@ -32,5 +32,11 @@ export function sitesRoutes({ service }: { service: SitesService }): FastifyPlug
       await service.remove(request.user.sub, id);
       return reply.code(204).send();
     });
+
+    app.delete("/:id/data", async (request, reply) => {
+      const { id } = siteIdParamsSchema.parse(request.params);
+      await service.clearData(request.user.sub, id);
+      return reply.code(204).send();
+    });
   };
 }

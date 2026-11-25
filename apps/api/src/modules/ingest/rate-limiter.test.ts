@@ -16,9 +16,16 @@ beforeEach(async () => {
 });
 
 const limiter = (ipPerMin: number, sitePerMin: number) =>
-  createRateLimiter(redis, { ipPerMin, sitePerMin }, () => clock);
+  createRateLimiter(redis, { ipPerMin, sitePerMin }, "test-secret", () => clock);
 
 describe("rate limiter", () => {
+  it("never puts a raw IP in Redis", async () => {
+    await limiter(10, 10).check("203.0.113.7", "cm_a");
+    const keys = await redis.keys("*");
+    expect(keys).toHaveLength(2);
+    expect(keys.join()).not.toContain("203.0.113.7");
+  });
+
   it("allows up to the IP limit, then blocks", async () => {
     const rl = limiter(2, 100);
     expect((await rl.check("1.1.1.1", "cm_a")).allowed).toBe(true);

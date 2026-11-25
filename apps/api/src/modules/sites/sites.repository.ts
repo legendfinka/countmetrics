@@ -15,6 +15,13 @@ export function createSitesRepository(prisma: PrismaClient) {
       prisma.site.update({ where: { id }, data: { domain } }),
 
     delete: (id: string) => prisma.site.delete({ where: { id } }),
+
+    /** Deletes all visits of a site. The site itself stays. */
+    clearData: (siteId: string) =>
+      prisma.$transaction([
+        prisma.event.deleteMany({ where: { siteId } }),
+        prisma.statsMinute.deleteMany({ where: { siteId } }),
+      ]),
   };
 }
 

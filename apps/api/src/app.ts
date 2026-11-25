@@ -8,6 +8,7 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 import type { Redis } from "ioredis";
 import type { HealthResponse } from "@countmetrics/shared";
 import type { Config } from "./config.js";
+import { loggerOptions } from "./lib/logger.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { createAuthRepository } from "./modules/auth/auth.repository.js";
@@ -32,7 +33,8 @@ import {
   type SimulatorLimits,
 } from "./modules/simulator/simulator.service.js";
 import { simulatorRoutes } from "./modules/simulator/simulator.routes.js";
-import { sitesRoutes } from "./modules/sites/sites.routes.js";
+import { createForgetStats } from "./modules/sites/forget-stats.js";
+import { sitesRoutes }from "./modules/sites/sites.routes.js";
 import { createSitesRepository } from "./modules/sites/sites.repository.js";
 import { createSitesService } from "./modules/sites/sites.service.js";
 import { trackerRoutes } from "./modules/tracker/tracker.routes.js";
@@ -73,7 +75,7 @@ export async function buildApp({
   simulatorLimits,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
-    logger: config.NODE_ENV !== "test",
+    logger: config.NODE_ENV === "test" ? false : loggerOptions,
     // Trust only the closest N proxies. Then a client can't fake its IP.
     trustProxy:
       config.TRUST_PROXY_HOPS > 0 ? (_address, hop) => hop < config.TRUST_PROXY_HOPS : false,
@@ -110,10 +112,16 @@ export async function buildApp({
     config,
     signAccessToken: (sub) => app.jwt.sign({ sub }, { expiresIn: config.ACCESS_TOKEN_TTL_SECONDS }),
     // "Try demo" is public, so each IP may use it only a few times per minute
-    demoLimiter: createRateLimiter(redis, { ipPerMin: 10, sitePerMin: 10_000 }, Date.now, "cm:rl:demo"),
+    demoLimiter: createRateLimiter(
+      redis,
+      { ipPerMin: 10, sitePerMin: 10_000 },
+      config.JWT_SECRET,
+      Date.now,
+      "cm:rl:demo",
+    ),
   });
   const sitesRepository = createSitesRepository(prisma);
-  const sitesService = createSitesService(sitesRepository);
+  const sitesService = createSitesService(sitesRepository, createForgetStats(redis));
   const simulatorService = createSimulatorService({
     sites: sitesRepository,
     redis,
@@ -148,10 +156,11 @@ export async function buildApp({
   });
   const ingestService = createIngestService({
     siteKeys: createSiteKeyCache(createIngestRepository(prisma).findSiteIdByKey),
-    limiter: createRateLimiter(redis, {
-      ipPerMin: config.RATE_LIMIT_IP_PER_MIN,
-      sitePerMin: config.RATE_LIMIT_SITE_PER_MIN,
-    }),
+    limiter: createRateLimiter(
+      redis,
+      { ipPerMin: config.RATE_LIMIT_IP_PER_MIN, sitePerMin: config.RATE_LIMIT_SITE_PER_MIN },
+      config.JWT_SECRET,
+    ),
     salts: createSaltProvider(redis),
     queue,
     lookupCountry,

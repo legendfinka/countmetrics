@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import type { Redis } from "ioredis";
 
 const WINDOW_MS = 60_000;
@@ -19,6 +20,8 @@ export interface RateLimitResult {
 export function createRateLimiter(
   redis: Redis,
   limits: RateLimits,
+  /** IPs are hashed with this, so Redis never holds a raw IP */
+  secret: string,
   now: () => number = Date.now,
   /** Each use of the limiter needs its own prefix, so the counters don't mix */
   prefix = "cm:rl",
@@ -27,7 +30,8 @@ export function createRateLimiter(
     async check(ip: string, siteKey: string): Promise<RateLimitResult> {
       const t = now();
       const window = Math.floor(t / WINDOW_MS);
-      const ipKey = `${prefix}:ip:${ip}:${window}`;
+      const ipHash = createHmac("sha256", secret).update(ip).digest("hex").slice(0, 32);
+      const ipKey = `${prefix}:ip:${ipHash}:${window}`;
       const siteKeyKey = `${prefix}:site:${siteKey}:${window}`;
 
       const results = await redis
