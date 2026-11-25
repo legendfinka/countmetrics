@@ -4,6 +4,7 @@ import { DEMO_USER_ID } from "@countmetrics/shared";
 import { useUser } from "../features/auth/auth-context";
 import { Footer } from "./footer";
 import { Logo } from "./logo";
+import { ThemeToggle } from "./theme-toggle";
 
 /** The page frame for logged-in users: a dark top bar and the page below it. */
 export function Layout() {
@@ -17,8 +18,9 @@ export function Layout() {
             <Logo size={28} />
             CountMetrics
           </Link>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-2 text-sm sm:gap-4">
             <span className="hidden text-white/70 sm:inline">{user.name}</span>
+            <ThemeToggle className="text-white/90 hover:bg-white/10 focus-visible:outline-white" />
             <button
               type="button"
               onClick={() => void logout()}

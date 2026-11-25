@@ -1,6 +1,8 @@
 import { Globe, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Site } from "@countmetrics/shared";
+import { ConfirmDialog } from "../../components/confirm-dialog";
 import { Logo } from "../../components/logo";
 import { Alert, Loading } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
@@ -11,38 +13,48 @@ import { useDeleteSite, useSites } from "./sites-api";
 
 function SiteRow({ site }: { site: Site }) {
   const deleteSite = useDeleteSite();
-
-  function onDelete() {
-    if (!window.confirm(`Delete ${site.domain}? All its data will be lost.`)) return;
-    deleteSite.mutate(site.id);
-  }
+  const [asking, setAsking] = useState(false);
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 py-3">
-      <div className="flex min-w-0 items-center gap-3">
-        <Globe size={20} className="shrink-0 text-brand" aria-hidden="true" />
-        <div className="min-w-0">
-          <p className="truncate font-semibold">{site.domain}</p>
-          <p className="text-sm text-muted">Added {new Date(site.createdAt).toLocaleDateString()}</p>
-        </div>
-      </div>
-      <div className="flex gap-2">
+    <li className="py-1">
+      <div className="relative -mx-2 flex items-center justify-between gap-3 rounded px-2 py-2 hover:bg-page">
+        {/* The link's ::after covers the whole row, so a click anywhere opens the site */}
         <Link
           to={`/sites/${site.id}`}
-          className="rounded border border-line bg-white px-3 py-2 text-sm font-semibold hover:bg-page focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="flex min-w-0 flex-1 items-center gap-3 after:absolute after:inset-0 after:rounded focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-brand"
         >
-          Open
+          <Globe size={20} className="shrink-0 text-brand" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">{site.domain}</span>
+            <span className="block text-sm text-muted">
+              Added {new Date(site.createdAt).toLocaleDateString()}
+            </span>
+          </span>
         </Link>
+        {/* "relative" puts the button above the link, so it only deletes */}
         <Button
           variant="danger"
-          onClick={onDelete}
+          onClick={() => setAsking(true)}
           disabled={deleteSite.isPending}
           aria-label={`Delete ${site.domain}`}
-          className="px-3 py-2"
+          className="relative px-3 py-2"
         >
           <Trash2 size={16} aria-hidden="true" />
         </Button>
       </div>
+      {deleteSite.isError && <Alert>{errorMessage(deleteSite.error)}</Alert>}
+      {asking && (
+        <ConfirmDialog
+          title="Delete site?"
+          message={`${site.domain} and all its data will be deleted. This can't be undone.`}
+          confirmLabel="Delete"
+          onCancel={() => setAsking(false)}
+          onConfirm={() => {
+            setAsking(false);
+            deleteSite.mutate(site.id);
+          }}
+        />
+      )}
     </li>
   );
 }

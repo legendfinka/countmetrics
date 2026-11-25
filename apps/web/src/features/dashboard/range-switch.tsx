@@ -16,7 +16,7 @@ interface RangeSwitchProps {
 /** Four buttons to pick the time range. */
 export function RangeSwitch({ value, onChange }: RangeSwitchProps) {
   return (
-    <div role="group" aria-label="Time range" className="inline-flex overflow-hidden rounded border border-line bg-white">
+    <div role="group" aria-label="Time range" className="inline-flex max-w-full overflow-hidden rounded border border-line bg-surface">
       {OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -24,7 +24,7 @@ export function RangeSwitch({ value, onChange }: RangeSwitchProps) {
           aria-pressed={option.value === value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "border-r border-line px-3 py-2 text-sm font-semibold last:border-r-0",
+            "whitespace-nowrap border-r border-line px-2 py-2 text-sm font-semibold last:border-r-0 sm:px-3",
             "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
             option.value === value ? "bg-brand text-white" : "text-ink hover:bg-page",
           )}

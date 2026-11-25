@@ -11,11 +11,11 @@ import {
 import type { StatsRange, TimeseriesPoint } from "@countmetrics/shared";
 import { formatTick, formatTooltip } from "./format";
 
-// The same colours as the theme in index.css
-const BRAND = "#2f7fc1";
-const GOOD = "#3daa8a";
-const MUTED = "#6b7785";
-const LINE = "#e3e8ee";
+// The theme colours from index.css, so the chart follows dark mode
+const BRAND = "var(--color-brand)";
+const GOOD = "var(--color-good)";
+const MUTED = "var(--color-muted)";
+const LINE = "var(--color-line)";
 
 /** The chart. It is loaded on demand, because the chart library is big. */
 export function TimeseriesChart({ points, range }: { points: TimeseriesPoint[]; range: StatsRange }) {
@@ -34,7 +34,12 @@ export function TimeseriesChart({ points, range }: { points: TimeseriesPoint[]; 
         <YAxis allowDecimals={false} stroke={MUTED} fontSize={12} width={36} tickLine={false} axisLine={false} />
         <Tooltip
           labelFormatter={(time: string) => formatTooltip(time, range)}
-          contentStyle={{ border: `1px solid ${LINE}`, borderRadius: 4, fontSize: 13 }}
+          contentStyle={{
+            background: "var(--color-surface)",
+            border: `1px solid ${LINE}`,
+            borderRadius: 4,
+            fontSize: 13,
+          }}
         />
         <Legend iconType="circle" wrapperStyle={{ fontSize: 13 }} />
         <Area

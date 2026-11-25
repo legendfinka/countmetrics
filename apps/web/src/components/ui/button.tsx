@@ -1,12 +1,14 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "../../lib/utils";
 
-type Variant = "primary" | "secondary" | "danger";
+type Variant = "primary" | "secondary" | "danger" | "destructive";
 
 const variants: Record<Variant, string> = {
   primary: "border-brand bg-brand text-white hover:bg-brand-dark hover:border-brand-dark",
-  secondary: "border-line bg-white text-ink hover:bg-page",
-  danger: "border-line bg-white text-bad hover:bg-bad/10",
+  secondary: "border-line bg-surface text-ink hover:bg-page",
+  danger: "border-line bg-surface text-bad hover:bg-bad/10",
+  /** The final "yes, delete" button */
+  destructive: "border-bad bg-bad text-white hover:opacity-90",
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

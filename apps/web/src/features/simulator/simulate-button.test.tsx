@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DEMO_SITE_ID } from "@countmetrics/shared";
 import { LOGGED_IN, apiError, dashboardRoutes, mockApi, renderApp, site } from "../../test/helpers";
 import { SimulateButton } from "./simulate-button";
@@ -107,16 +107,15 @@ describe("on the dashboard", () => {
   it("clears the data only after you confirm", async () => {
     const route = `DELETE /api/sites/${site.id}/data`;
     const server = mockApi({ ...LOGGED_IN, ...dashboardRoutes(), [route]: { status: 204 } });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderApp(`/sites/${site.id}`);
     const button = await screen.findByRole("button", { name: "Clear data" });
 
     await userEvent.click(button);
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(server.count(route)).toBe(0);
 
-    confirm.mockReturnValue(true);
     await userEvent.click(button);
+    await userEvent.click(screen.getByRole("button", { name: "Yes, clear it" }));
     await waitFor(() => expect(server.count(route)).toBe(1));
-    confirm.mockRestore();
   });
 });

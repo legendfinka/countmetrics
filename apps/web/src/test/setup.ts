@@ -11,6 +11,14 @@ class FakeResizeObserver {
   disconnect(): void {}
 }
 
+// jsdom can't open a <dialog> yet. This is enough for the tests.
+HTMLDialogElement.prototype.showModal = function () {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close = function () {
+  this.open = false;
+};
+
 beforeEach(() => {
   FakeWebSocket.instances = [];
   vi.stubGlobal("WebSocket", FakeWebSocket);

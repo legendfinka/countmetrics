@@ -7,6 +7,7 @@
 @theme {
   --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
   --color-page: #f4f6f8;
+  --color-surface: #ffffff;
   --color-ink: #2c3e50;
   --color-muted: #6b7785;
   --color-line: #e3e8ee;
@@ -19,6 +20,21 @@
 
 html {
   color-scheme: light;
+}
+
+/* Dark mode only changes the colours. The classes stay the same. */
+html.dark {
+  color-scheme: dark;
+  --color-page: #171d24;
+  --color-surface: #212933;
+  --color-ink: #e4e9ee;
+  --color-muted: #9aa7b4;
+  --color-line: #35414e;
+  --color-bar: #11161c;
+  --color-brand: #3f8fd0;
+  --color-brand-dark: #3580bd;
+  --color-good: #4cc09d;
+  --color-bad: #ec8078;
 }
 
 body {

@@ -37,7 +37,7 @@ const LISTS: { kind: BreakdownKind; title: string; label?: (name: string) => str
 function TrackerCard({ siteKey, open, onToggle }: { siteKey: string; open: boolean; onToggle: () => void }) {
   return (
     <Card>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle className="mb-0">Tracker snippet</CardTitle>
         <Button variant="secondary" aria-expanded={open} onClick={onToggle}>
           {open ? "Hide snippet" : "Show snippet"}
@@ -107,8 +107,8 @@ export function DashboardPage() {
           All sites
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold">{site.data.domain}</h1>
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <h1 className="min-w-0 break-all text-2xl font-semibold">{site.data.domain}</h1>
             <LiveBadge status={liveStatus} />
           </div>
           <div className="flex flex-wrap items-start gap-3">

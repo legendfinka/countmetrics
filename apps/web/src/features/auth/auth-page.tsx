@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Footer } from "../../components/footer";
 import { Logo } from "../../components/logo";
+import { ThemeToggle } from "../../components/theme-toggle";
 import { Card } from "../../components/ui/card";
 import { TryDemoButton } from "./try-demo-button";
 
@@ -13,12 +14,13 @@ interface AuthPageProps {
 /** The frame of the login and register pages: logo, a card, and a link below. */
 export function AuthPage({ title, children, footer }: AuthPageProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
+      <ThemeToggle className="absolute right-3 top-3 text-muted hover:bg-line focus-visible:outline-brand" />
       <div className="mb-6 flex flex-col items-center text-center">
         <Logo size={72} className="mb-3 drop-shadow-md" />
-        <p className="text-3xl font-bold text-bar">CountMetrics</p>
+        <p className="text-3xl font-bold text-ink">CountMetrics</p>
         <p className="mt-1 text-muted">Live web analytics that respects privacy</p>
-        <ul className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-semibold text-brand-dark">
+        <ul className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-semibold text-ink">
           {["No cookies", "Real-time", "No stored IPs"].map((feature) => (
             <li key={feature} className="rounded-full bg-brand/10 px-3 py-1">
               {feature}

@@ -1,6 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { LOGGED_IN, apiError, dashboardRoutes, mockApi, renderApp, site } from "../../test/helpers";
 import { snippetFor } from "./snippet";
 
@@ -15,7 +15,9 @@ describe("sites list", () => {
     mockApi({ ...LOGGED_IN, "GET /api/sites": { body: { sites: [site] } } });
     renderApp("/sites");
     expect(await screen.findByText("example.com")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", `/sites/${site.id}`);
+    // The whole row is one link
+    const row = screen.getByRole("link", { name: /example\.com/ });
+    expect(row).toHaveAttribute("href", `/sites/${site.id}`);
   });
 
   it("shows an error and can try again", async () => {
@@ -96,23 +98,26 @@ describe("delete a site", () => {
 
   it("deletes the site after the user confirms", async () => {
     const server = setup();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderApp("/sites");
 
     await userEvent.click(await screen.findByRole("button", { name: "Delete example.com" }));
 
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("example.com"));
+    expect(screen.getByRole("dialog", { name: "Delete site?" })).toHaveTextContent("example.com");
+    expect(server.count(`DELETE /api/sites/${site.id}`)).toBe(0);
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
     expect(await screen.findByText(/No sites yet/)).toBeInTheDocument();
     expect(server.count(`DELETE /api/sites/${site.id}`)).toBe(1);
   });
 
   it("does nothing when the user cancels", async () => {
     const server = setup();
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     renderApp("/sites");
 
     await userEvent.click(await screen.findByRole("button", { name: "Delete example.com" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(server.count(`DELETE /api/sites/${site.id}`)).toBe(0);
     expect(screen.getByText("example.com")).toBeInTheDocument();
   });
