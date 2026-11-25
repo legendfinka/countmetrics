@@ -13,6 +13,7 @@ import { registerErrorHandler } from "./plugins/error-handler.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 import { createAuthRepository } from "./modules/auth/auth.repository.js";
 import { createAuthService } from "./modules/auth/auth.service.js";
+import { AUTH_LIMITS, createLoginLimiter, type AuthLimits } from "./modules/auth/login-limiter.js";
 import { createLiveHub } from "./modules/live/live-hub.js";
 import { liveRoutes } from "./modules/live/live.routes.js";
 import { createLiveService } from "./modules/live/live.service.js";
@@ -54,6 +55,8 @@ export interface AppDeps {
   liveAuthTimeoutMs?: number;
   /** Limits of the traffic simulator. Tests use short times. */
   simulatorLimits?: Partial<SimulatorLimits>;
+  /** Login and sign-up limits. Tests register many users, so they raise them. */
+  authLimits?: Partial<AuthLimits>;
 }
 
 const INGEST_PATH = "/api/event";
@@ -73,6 +76,7 @@ export async function buildApp({
   trackerFile = DEFAULT_TRACKER_FILE,
   liveAuthTimeoutMs,
   simulatorLimits,
+  authLimits,
 }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.NODE_ENV === "test" ? false : loggerOptions,
@@ -119,6 +123,7 @@ export async function buildApp({
       Date.now,
       "cm:rl:demo",
     ),
+    loginLimiter: createLoginLimiter(redis, config.JWT_SECRET, { ...AUTH_LIMITS, ...authLimits }),
   });
   const sitesRepository = createSitesRepository(prisma);
   const sitesService = createSitesService(sitesRepository, createForgetStats(redis));

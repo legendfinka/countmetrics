@@ -5,6 +5,7 @@ import { Redis } from "ioredis";
 import type { AuthResponse, EnrichedEvent } from "@countmetrics/shared";
 import { buildApp } from "../src/app.js";
 import type { Config } from "../src/config.js";
+import type { AuthLimits } from "../src/modules/auth/login-limiter.js";
 import type { EventQueue } from "../src/modules/ingest/event-queue.js";
 import type { SimulatorLimits } from "../src/modules/simulator/simulator.service.js";
 
@@ -60,6 +61,7 @@ export async function createTestContext(
     trackerFile?: string;
     liveAuthTimeoutMs?: number;
     simulatorLimits?: Partial<SimulatorLimits>;
+    authLimits?: Partial<AuthLimits>;
   } = {},
 ): Promise<TestContext> {
   const prisma = new PrismaClient({ datasourceUrl: dbUrl });
@@ -75,6 +77,12 @@ export async function createTestContext(
     trackerFile: options.trackerFile,
     liveAuthTimeoutMs: options.liveAuthTimeoutMs,
     simulatorLimits: options.simulatorLimits,
+    // Tests log in very often from one address. The limit tests set their own numbers.
+    authLimits: options.authLimits ?? {
+      failedPerEmail: 10_000,
+      loginsPerIpPerMin: 10_000,
+      registersPerIpPerMin: 10_000,
+    },
   });
   return {
     app,

@@ -11,6 +11,7 @@ import { burnPasswordCheck, hashPassword, verifyPassword } from "../../lib/passw
 import { generateRefreshToken, hashToken } from "../../lib/tokens.js";
 import type { RateLimiter } from "../ingest/rate-limiter.js";
 import type { AuthRepository } from "./auth.repository.js";
+import type { LoginLimiter } from "./login-limiter.js";
 
 export interface Session {
   accessToken: string;
@@ -25,6 +26,7 @@ interface Deps {
   signAccessToken: (userId: string) => string;
   /** Limits "Try demo" per IP. It is a public endpoint that creates a session. */
   demoLimiter: Pick<RateLimiter, "check">;
+  loginLimiter: LoginLimiter;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -35,7 +37,7 @@ const toPublicUser = (u: { id: string; email: string; name: string }): PublicUse
   name: u.name,
 });
 
-export function createAuthService({ repo, config, signAccessToken, demoLimiter }: Deps) {
+export function createAuthService({ repo, config, signAccessToken, demoLimiter, loginLimiter }: Deps) {
   const invalidCredentials = () => unauthorized("INVALID_CREDENTIALS", "Invalid email or password");
   const invalidRefresh = () => unauthorized("INVALID_REFRESH_TOKEN", "Invalid refresh token");
 
@@ -57,7 +59,8 @@ export function createAuthService({ repo, config, signAccessToken, demoLimiter }
   }
 
   return {
-    async register(input: RegisterInput): Promise<Session> {
+    async register(input: RegisterInput, ip: string): Promise<Session> {
+      await loginLimiter.beforeRegister(ip);
       if (await repo.findUserByEmail(input.email)) {
         throw conflict("EMAIL_TAKEN", "Email is already registered");
       }
@@ -77,13 +80,16 @@ export function createAuthService({ repo, config, signAccessToken, demoLimiter }
       }
     },
 
-    async login(input: LoginInput): Promise<Session> {
+    async login(input: LoginInput, ip: string): Promise<Session> {
+      // Unknown emails are limited too, so the limit doesn't show who has an account
+      await loginLimiter.beforeLogin(ip, input.email);
       const user = await repo.findUserByEmail(input.email);
       if (!user) {
         await burnPasswordCheck(input.password);
         throw invalidCredentials();
       }
       if (!(await verifyPassword(user.passwordHash, input.password))) throw invalidCredentials();
+      await loginLimiter.loginSucceeded(input.email);
       return startSession(toPublicUser(user));
     },
 

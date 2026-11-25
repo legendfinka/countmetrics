@@ -22,9 +22,30 @@ TypeScript, React, Fastify, BullMQ, Redis, PostgreSQL.
 
 ## Highlights
 
+- **Safer login:** rate limits slow down password guessing.
 - **Fast tracking:** the API queues events, and the worker saves them in batches.
 - **Privacy:** no tracking cookies, no raw IPs saved by the app, and visitor IDs change daily.
 - **Load tested:** at 1000 events/s, batching cut the longest queue from 36,185 to 527. [Details](loadtest/RESULTS.md)
+
+## Add the tracker
+
+Copy the snippet from your dashboard into your site:
+
+```html
+<script defer src="https://YOUR-API-URL/tracker.js" data-site-key="YOUR-SITE-KEY"></script>
+```
+
+Pageviews are tracked automatically. For custom events, call `countmetrics.track("signup")`. Nothing is sent if Do Not Track is on.
+
+## Privacy
+
+Visitors are counted with a hash of a daily salt, site key, IP and browser name. Old salts expire, so visitors can't be linked across days.
+
+## Key decisions
+
+- **Queue:** the API doesn't wait for PostgreSQL to save events.
+- **Batching:** fewer database writes, so the worker keeps up with traffic.
+- **Fastify:** fast, with a simple plugin system.
 
 ## Run it locally
 
@@ -42,4 +63,4 @@ pnpm dev               # http://localhost:5173
 
 ---
 
-This product includes GeoLite2 data created by MaxMind, available from [maxmind.com](https://www.maxmind.com).
+<sub>This product includes GeoLite2 data created by MaxMind, available from [maxmind.com](https://www.maxmind.com).</sub>

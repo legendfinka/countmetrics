@@ -32,12 +32,12 @@ export function authRoutes({ service, config }: Deps): FastifyPluginAsync {
 
   return async (app) => {
     app.post("/register", async (request, reply) => {
-      const session = await service.register(registerSchema.parse(request.body));
+      const session = await service.register(registerSchema.parse(request.body), request.ip);
       return sendSession(reply, 201, session);
     });
 
     app.post("/login", async (request, reply) => {
-      const session = await service.login(loginSchema.parse(request.body));
+      const session = await service.login(loginSchema.parse(request.body), request.ip);
       return sendSession(reply, 200, session);
     });
 
