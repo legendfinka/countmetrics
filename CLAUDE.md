@@ -152,7 +152,8 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 - `pnpm lint` / `pnpm typecheck` / `pnpm test` — must all pass before committing
 - `pnpm --filter api prisma migrate dev` — run migrations
 - `pnpm --filter api seed` — seed demo user, demo site and historical demo data
-- `k6 run loadtest/ingest.js` — run the load test
+- `k6 run loadtest/ingest.js` — run the load test (setup steps are in `loadtest/RESULTS.md`)
+- `pnpm --filter worker queue-depth` — print the queue size during a load test
 
 ## CI
 

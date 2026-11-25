@@ -26,6 +26,10 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    files: ["loadtest/*.js"],
+    languageOptions: { globals: { __ENV: "readonly", __VU: "readonly" } },
+  },
+  {
     files: ["apps/web/**/*.{ts,tsx}", "packages/tracker/**/*.ts"],
     languageOptions: { globals: globals.browser },
   },
