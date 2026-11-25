@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch --env-file=../../.env src/index.ts",
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/index.js",
+    "start": "node --import tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "dotenv -e ../../.env -- vitest run --passWithNoTests",
     "prisma": "dotenv -e ../../.env -- prisma",

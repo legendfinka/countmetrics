@@ -1,0 +1,42 @@
+# Free setup on Render: one web service (API + worker) and one Redis. See DEPLOY.md.
+services:
+  - type: web
+    name: countmetrics-api
+    runtime: node
+    plan: free
+    buildCommand: >-
+      pnpm install --frozen-lockfile --prod=false &&
+      pnpm --filter api prisma generate &&
+      pnpm --filter @countmetrics/tracker build &&
+      pnpm --filter api prisma migrate deploy
+    startCommand: node scripts/start-all.mjs
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: 10000
+      - key: TRUST_PROXY_HOPS
+        value: 1
+      - key: WORKER_CONCURRENCY
+        value: 500
+      - key: JWT_SECRET
+        generateValue: true
+      # You type these two in the Render dashboard
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: countmetrics-redis
+          property: connectionString
+
+  - type: keyvalue
+    name: countmetrics-redis
+    plan: free
+    # The queue must never lose jobs to make room
+    maxmemoryPolicy: noeviction
+    # Only your own Render services can connect
+    ipAllowList: []

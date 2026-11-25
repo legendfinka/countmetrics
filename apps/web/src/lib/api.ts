@@ -4,6 +4,9 @@ import { authResponseSchema, type AuthResponse } from "@countmetrics/shared";
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 /** The same server for WebSockets: http becomes ws, https becomes wss. */
 export const WS_URL = API_URL.replace(/^http/, "ws");
+// In production, normal requests go through the web app's own domain, so the login cookie works.
+// WebSockets and the tracker still use API_URL directly.
+const REQUEST_URL = import.meta.env.VITE_API_PROXY === "true" ? "" : API_URL;
 
 export class ApiError extends Error {
   constructor(
@@ -50,7 +53,7 @@ export function refreshSession(): Promise<AuthResponse | null> {
 
 async function requestRefresh(): Promise<AuthResponse | null> {
   try {
-    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+    const res = await fetch(`${REQUEST_URL}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
     });
@@ -82,7 +85,7 @@ function send(path: string, { method = "GET", body, auth = true }: RequestOption
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (auth && accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
-  return fetch(`${API_URL}${path}`, {
+  return fetch(`${REQUEST_URL}${path}`, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),

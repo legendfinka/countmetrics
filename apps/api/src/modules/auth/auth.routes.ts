@@ -14,15 +14,15 @@ interface Deps {
 }
 
 export function authRoutes({ service, config }: Deps): FastifyPluginAsync {
-  // In production the web app and the API are on different sites.
-  // So the cookie needs SameSite=None and Secure. Locally, Lax is enough.
+  // The web app calls the API through its own domain (a proxy in production).
+  // So SameSite=Lax works, and other sites can't use the cookie.
   const secure = config.NODE_ENV === "production";
 
   function sendSession(reply: FastifyReply, status: number, session: Session) {
     reply.setCookie(REFRESH_COOKIE, session.refreshToken, {
       httpOnly: true,
       secure,
-      sameSite: secure ? "none" : "lax",
+      sameSite: "lax",
       path: COOKIE_PATH,
       expires: session.refreshExpiresAt,
     });
