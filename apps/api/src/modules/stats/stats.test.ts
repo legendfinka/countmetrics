@@ -148,7 +148,7 @@ describe("access", () => {
 
   it("returns 404 for a site of another user", async () => {
     const bob = await registerUser(ctx.app, "bob@example.com");
-    for (const path of ["overview", "timeseries", "pages", "events"]) {
+    for (const path of ["overview", "timeseries", "pages", "actions"]) {
       const res = await get(path, bob.accessToken);
       expect(res.statusCode, path).toBe(404);
       expect(res.json().error.code).toBe("SITE_NOT_FOUND");
@@ -287,7 +287,7 @@ describe("top lists", () => {
   });
 
   it("lists custom events without pageviews", async () => {
-    const { rows } = (await get("events")).json<BreakdownResponse>();
+    const { rows } = (await get("actions")).json<BreakdownResponse>();
     expect(rows).toEqual([{ name: "signup", count: 1, visitors: 1 }]);
   });
 

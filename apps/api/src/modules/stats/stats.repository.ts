@@ -18,7 +18,7 @@ export interface TimeWindow {
 const ts = (date: Date) => Prisma.sql`(${date.toISOString()}::timestamptz AT TIME ZONE 'UTC')`;
 
 // Column names come from this fixed list, never from user input.
-const COLUMN: Record<Exclude<BreakdownKind, "events">, Prisma.Sql> = {
+const COLUMN: Record<Exclude<BreakdownKind, "actions">, Prisma.Sql> = {
   pages: Prisma.sql`"path"`,
   referrers: Prisma.sql`"referrer"`,
   countries: Prisma.sql`"country"`,
@@ -27,7 +27,7 @@ const COLUMN: Record<Exclude<BreakdownKind, "events">, Prisma.Sql> = {
 };
 
 // What to show when the value is missing
-const FALLBACK: Record<Exclude<BreakdownKind, "events">, string> = {
+const FALLBACK: Record<Exclude<BreakdownKind, "actions">, string> = {
   pages: "Unknown",
   referrers: "Direct",
   countries: "Unknown",
@@ -95,7 +95,7 @@ export function createStatsRepository(prisma: PrismaClient, redis: Redis) {
     /** Top pages, referrers, countries, devices or browsers. Pageviews only. */
     breakdown(
       siteId: string,
-      kind: Exclude<BreakdownKind, "events">,
+      kind: Exclude<BreakdownKind, "actions">,
       { from, to }: TimeWindow,
       limit: number,
     ): Promise<BreakdownRow[]> {

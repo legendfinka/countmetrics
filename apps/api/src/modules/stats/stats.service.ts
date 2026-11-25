@@ -98,7 +98,7 @@ export function createStatsService({ sites, stats, cache, now = () => new Date()
         async () => {
           const window = windowFor(range);
           const rows =
-            kind === "events"
+            kind === "actions"
               ? await stats.topEvents(siteId, window, limit)
               : await stats.breakdown(siteId, kind, window, limit);
           return { range, rows };

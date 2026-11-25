@@ -10,7 +10,8 @@ export const BREAKDOWN_KINDS = [
   "countries",
   "devices",
   "browsers",
-  "events",
+  // Custom events. Not named "events", because ad blockers block ".../stats/events".
+  "actions",
 ] as const;
 export const breakdownKindSchema = z.enum(BREAKDOWN_KINDS);
 export type BreakdownKind = z.infer<typeof breakdownKindSchema>;
@@ -52,7 +53,7 @@ export const timeseriesSchema = z.object({
 
 export const breakdownRowSchema = z.object({
   name: z.string(),
-  /** Number of events (pageviews, or custom events for the "events" list) */
+  /** Number of events (pageviews, or custom events for the "actions" list) */
   count: z.number().int(),
   visitors: z.number().int(),
 });

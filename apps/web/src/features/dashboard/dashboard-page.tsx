@@ -25,7 +25,7 @@ const LISTS: { kind: BreakdownKind; title: string; label?: (name: string) => str
   { kind: "countries", title: "Countries", label: countryLabel },
   { kind: "devices", title: "Devices", label: capitalize },
   { kind: "browsers", title: "Browsers" },
-  { kind: "events", title: "Top events" },
+  { kind: "actions", title: "Top events" },
 ];
 
 function TrackerCard({ siteKey, open, onToggle }: { siteKey: string; open: boolean; onToggle: () => void }) {

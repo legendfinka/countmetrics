@@ -43,7 +43,7 @@ describe("numbers and lists", () => {
           countries: [{ name: "DE", count: 30, visitors: 20 }],
           devices: [{ name: "mobile", count: 10, visitors: 9 }],
           browsers: [{ name: "Firefox", count: 8, visitors: 7 }],
-          events: [{ name: "signup", count: 3, visitors: 3 }],
+          actions: [{ name: "signup", count: 3, visitors: 3 }],
         },
       }),
     });
