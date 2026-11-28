@@ -1,4 +1,4 @@
-import { Globe, Trash2 } from "lucide-react";
+import { Globe, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Site } from "@countmetrics/shared";
@@ -8,12 +8,14 @@ import { Alert, Loading } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { errorMessage } from "../../lib/api";
+import { EditSiteDialog } from "./edit-site-dialog";
 import { SiteForm } from "./site-form";
 import { useDeleteSite, useSites } from "./sites-api";
 
 function SiteRow({ site }: { site: Site }) {
   const deleteSite = useDeleteSite();
   const [asking, setAsking] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   return (
     <li className="py-1">
@@ -31,17 +33,29 @@ function SiteRow({ site }: { site: Site }) {
             </span>
           </span>
         </Link>
-        {/* "relative" puts the button above the link, so it only deletes */}
-        <Button
-          variant="danger"
-          onClick={() => setAsking(true)}
-          disabled={deleteSite.isPending}
-          aria-label={`Delete ${site.domain}`}
-          className="relative px-3 py-2"
-        >
-          <Trash2 size={16} aria-hidden="true" />
-        </Button>
+        {/* "relative" puts the buttons above the link, so they don't open the site */}
+        <div className="relative flex gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setEditing(true)}
+            disabled={deleteSite.isPending}
+            aria-label={`Edit ${site.domain}`}
+            className="px-3 py-2"
+          >
+            <Pencil size={16} aria-hidden="true" />
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => setAsking(true)}
+            disabled={deleteSite.isPending}
+            aria-label={`Delete ${site.domain}`}
+            className="px-3 py-2"
+          >
+            <Trash2 size={16} aria-hidden="true" />
+          </Button>
+        </div>
       </div>
+      {editing && <EditSiteDialog site={site} onClose={() => setEditing(false)} />}
       {deleteSite.isError && <Alert>{errorMessage(deleteSite.error)}</Alert>}
       {asking && (
         <ConfirmDialog

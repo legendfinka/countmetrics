@@ -154,6 +154,7 @@ The ingestion endpoint must stay fast under load: validation + enrichment + enqu
 - `pnpm --filter api seed` — seed demo user, demo site and historical demo data
 - `k6 run loadtest/ingest.js` — run the load test (setup steps are in `loadtest/RESULTS.md`)
 - `pnpm --filter worker queue-depth` — print the queue size during a load test
+- `pnpm --filter web build:map` — regenerate the world map shapes (`world-shapes.ts`)
 
 ## CI
 

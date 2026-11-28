@@ -39,6 +39,8 @@ model RefreshToken {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  // The worker deletes expired tokens every hour
+  @@index([expiresAt])
 }
 
 // Raw events. Only added, never changed. Uses a BigInt id because it grows fastest.

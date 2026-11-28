@@ -83,6 +83,84 @@ describe("add a site", () => {
   });
 });
 
+describe("edit a site", () => {
+  const route = `PATCH /api/sites/${site.id}`;
+
+  async function openDialog() {
+    await userEvent.click(await screen.findByRole("button", { name: "Edit example.com" }));
+    return screen.getByLabelText("New domain");
+  }
+
+  it("saves the cleaned domain, closes and shows the new name", async () => {
+    let current = site;
+    const server = mockApi({
+      ...LOGGED_IN,
+      "GET /api/sites": () => ({ body: { sites: [current] } }),
+      [route]: () => {
+        current = { ...site, domain: "new.com" };
+        return { body: { site: current } };
+      },
+    });
+    renderApp("/sites");
+    const input = await openDialog();
+    expect(input).toHaveValue("example.com");
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "https://New.com/page{Enter}");
+
+    expect(await screen.findByText("new.com")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(server.calls.find((call) => call.method === "PATCH")?.body).toEqual({ domain: "new.com" });
+  });
+
+  it("stays open for a bad domain, without calling the API", async () => {
+    const server = mockApi({ ...LOGGED_IN, "GET /api/sites": { body: { sites: [site] } } });
+    renderApp("/sites");
+    const input = await openDialog();
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "exa mple.com{Enter}");
+
+    expect(await screen.findByText(/Must be an address/)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(server.count(route)).toBe(0);
+  });
+
+  it("stays open and shows the error from the server", async () => {
+    mockApi({
+      ...LOGGED_IN,
+      "GET /api/sites": { body: { sites: [site] } },
+      [route]: { status: 403, body: apiError("DEMO_READ_ONLY", "The demo account is read-only.") },
+    });
+    renderApp("/sites");
+    const input = await openDialog();
+
+    await userEvent.clear(input);
+    await userEvent.type(input, "other.com{Enter}");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("read-only");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    // Typing again hides the old error
+    await userEvent.type(input, "x");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("does not call the API when nothing changed or on Cancel", async () => {
+    const server = mockApi({ ...LOGGED_IN, "GET /api/sites": { body: { sites: [site] } } });
+    renderApp("/sites");
+
+    await openDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await openDialog();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(server.count(route)).toBe(0);
+  });
+});
+
 describe("delete a site", () => {
   function setup() {
     let sites = [site];

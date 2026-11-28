@@ -90,6 +90,18 @@ export async function upsertMinuteStats(client: PoolClient, rows: MinuteStatsRow
   );
 }
 
+/**
+ * Only expired login tokens. A used token that has not expired must stay:
+ * if someone uses it again, the API sees the theft and logs the user out.
+ */
+export async function deleteExpiredRefreshTokens(pool: Pool): Promise<number> {
+  // "expiresAt" has no timezone and holds UTC, so now() is turned into UTC too
+  const result = await pool.query(
+    `DELETE FROM "RefreshToken" WHERE "expiresAt" < now() AT TIME ZONE 'UTC'`,
+  );
+  return result.rowCount ?? 0;
+}
+
 /** Job ids are only needed while a job can still come back. */
 export async function deleteOldProcessedJobs(pool: Pool, olderThanHours = 24): Promise<number> {
   const result = await pool.query(

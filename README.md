@@ -39,7 +39,7 @@ Pageviews are tracked automatically. For custom events, call `countmetrics.track
 
 ## Privacy
 
-Visitors are counted with a hash of a daily salt, site key, IP and browser name. Old salts expire, so visitors can't be linked across days.
+Visitors are counted with a hash of a daily salt, site key, IP and browser info (user agent). Old salts expire, so visitors can't be linked across days.
 
 ## Key decisions
 

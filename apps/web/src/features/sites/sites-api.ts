@@ -31,6 +31,19 @@ export function useCreateSite() {
   });
 }
 
+export function useUpdateSite(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (domain: string) =>
+      (await api(`/api/sites/${id}`, { method: "PATCH", body: { domain }, schema: siteResponse }))
+        .site,
+    onSuccess: (site) => {
+      queryClient.setQueryData(["sites", id], site);
+      return queryClient.invalidateQueries({ queryKey: ["sites"], exact: true });
+    },
+  });
+}
+
 export function useClearSiteData(id: string) {
   const queryClient = useQueryClient();
   return useMutation({

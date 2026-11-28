@@ -1,7 +1,7 @@
 import { Redis } from "ioredis";
 import pg from "pg";
 import { loadConfig } from "./config.js";
-import { deleteOldProcessedJobs } from "./repository.js";
+import { runCleanup } from "./cleanup.js";
 import { createEventWorker } from "./worker.js";
 
 const config = loadConfig();
@@ -38,12 +38,12 @@ const eventWorker = createEventWorker({
   },
 });
 
-const cleanup = setInterval(
-  () => {
-    deleteOldProcessedJobs(pool).catch((err) => log.error("processed job cleanup failed", err));
-  },
-  60 * 60 * 1000,
-);
+// Also at startup: a free server sleeps often and may never reach the first hour.
+// The latest run is kept, so shutdown can wait for it before closing the database.
+let cleaning = runCleanup(pool, log);
+const cleanup = setInterval(() => {
+  cleaning = runCleanup(pool, log);
+}, 60 * 60 * 1000);
 cleanup.unref();
 
 log.info(
@@ -56,7 +56,9 @@ async function shutdown(signal: string): Promise<void> {
   shuttingDown = true;
   log.info(`${signal} received, finishing the current batch`);
   clearInterval(cleanup);
-  await eventWorker.close();
+  clearInterval(report);
+  // runCleanup never throws, so this only waits
+  await Promise.all([eventWorker.close(), cleaning]);
   await Promise.all([queueConnection.quit(), redis.quit(), pool.end()]);
   process.exit(0);
 }
